@@ -12,7 +12,11 @@ public class NutriTrackApiClient
     public async Task<(bool ok, string? uid, string? error)> RegisterAsync(RegisterRequest req)
     {
         var client = _factory.CreateClient("NutriTrackApi");
-        var json = JsonSerializer.Serialize(req);
+        var json = JsonSerializer.Serialize(req, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        });
+
         var res = await client.PostAsync("/register", new StringContent(json, Encoding.UTF8, "application/json"));
         var body = await res.Content.ReadAsStringAsync();
 
@@ -36,7 +40,11 @@ public class NutriTrackApiClient
     public async Task<(bool ok, string? error)> SaveMealAsync(MealRequest req)
     {
         var client = _factory.CreateClient("NutriTrackApi");
-        var json = JsonSerializer.Serialize(req);
+        var json = JsonSerializer.Serialize(req, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        });
+
         var res = await client.PostAsync("/meals", new StringContent(json, Encoding.UTF8, "application/json"));
         var body = await res.Content.ReadAsStringAsync();
 
