@@ -1,0 +1,16 @@
+# ===== Node / Backend =====
+node_modules/
+.env
+serviceAccountKey.json
+*.log
+
+# ===== .NET / Visual Studio =====
+**/bin/
+**/obj/
+.vs/
+*.user
+*.suo
+
+# ===== OS junk =====
+.DS_Store
+Thumbs.db
