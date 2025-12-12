@@ -2,6 +2,9 @@ using System.Net.Http.Headers;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.UseUrls("http://localhost:5200");
+
+
 // Add services to the container.
 builder.Services.AddRazorPages();
 

@@ -1,0 +1,50 @@
+@page
+@model NutriTrack.Frontend.Pages.ProgressModel
+@{
+    ViewData["Title"] = "Progress";
+}
+
+<h2>Progress</h2>
+<p class="text-muted">Prototype progress using meals stored in session.</p>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="text-muted">Today % of Goal</div>
+        <div style="font-size:2rem;font-weight:700;">@Model.TodayPercent%</div>
+
+        <div class="progress mt-2" style="height: 20px;">
+            <div class="progress-bar" role="progressbar" style="width:@Model.TodayPercent%"></div>
+        </div>
+
+        <div class="text-muted mt-2">Today Calories: @Model.TodayTotal / @Model.DailyGoal</div>
+    </div>
+</div>
+
+<h4>Last 7 Days</h4>
+
+@if (Model.Weekly.Count == 0)
+{
+<p class="text-muted">No data yet. Add meals first.</p>
+}
+else
+{
+<table class="table">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Total Calories</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var row in Model.Weekly)
+        {
+        <tr>
+            <td>@row.Date.ToShortDateString()</td>
+            <td>@row.Total</td>
+        </tr>
+        }
+    </tbody>
+</table>
+}
+
+<a class="btn btn-link" href="/">Back to Dashboard</a>

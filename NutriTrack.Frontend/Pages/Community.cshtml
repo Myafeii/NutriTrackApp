@@ -1,0 +1,35 @@
+@page
+@model NutriTrack.Frontend.Pages.CommunityModel
+@{
+    ViewData["Title"] = "Community";
+}
+
+<h2>Community</h2>
+<p class="text-muted">Prototype-only: posts are stored in session.</p>
+
+<form method="post" class="mb-3">
+    <div class="mb-2">
+        <label class="form-label">Share a win / recipe</label>
+        <textarea class="form-control" asp-for="NewPost" rows="3" required></textarea>
+    </div>
+    <button class="btn btn-primary">Post</button>
+</form>
+
+@if (Model.Posts.Count == 0)
+{
+<p class="text-muted">No posts yet. Add one above.</p>
+}
+else
+{
+<div class="list-group">
+    @foreach (var p in Model.Posts.OrderByDescending(x => x.CreatedAt))
+        {
+    <div class="list-group-item">
+        <div style="font-weight:600;">@p.Text</div>
+        <div class="text-muted">@p.CreatedAt</div>
+    </div>
+        }
+</div>
+}
+
+<a class="btn btn-link mt-3" href="/">Back to Dashboard</a>

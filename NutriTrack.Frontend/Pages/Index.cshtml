@@ -1,10 +1,64 @@
 ﻿@page
-@model IndexModel
+@model NutriTrack.Frontend.Pages.IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Dashboard";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="d-flex justify-content-between align-items-center">
+    <div>
+        <h2>Dashboard</h2>
+        <p class="text-muted mb-0">UID: <strong>@Model.Uid</strong></p>
+    </div>
+    <div>
+        <a class="btn btn-outline-secondary" href="/Account/Logout">Logout</a>
+    </div>
 </div>
+
+<hr />
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted">Today’s Calories</div>
+                <div style="font-size: 2rem; font-weight: 700;">@Model.TodayTotal</div>
+                <div class="text-muted">Goal: @Model.DailyGoal</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted">Quick Actions</div>
+                <div class="mt-2">
+                    <a class="btn btn-primary me-2" href="/MealSearch">Search & Add Meal</a>
+                    <a class="btn btn-outline-primary me-2" href="/Progress">Progress</a>
+                    <a class="btn btn-outline-primary" href="/Community">Community</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h4 class="mt-4">Recent Meals</h4>
+
+@if (Model.Meals.Count == 0)
+{
+<p class="text-muted">No meals yet. Add one from Meal Search.</p>
+}
+else
+{
+<div class="list-group">
+    @foreach (var m in Model.Meals.OrderByDescending(x => x.CreatedAt).Take(10))
+        {
+    <div class="list-group-item d-flex justify-content-between align-items-center">
+        <div>
+            <div style="font-weight:600;">@m.Food</div>
+            <div class="text-muted">@m.CreatedAt</div>
+        </div>
+        <div style="font-weight:700;">@m.Calories</div>
+    </div>
+        }
+</div>
+}

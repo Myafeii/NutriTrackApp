@@ -1,0 +1,46 @@
+@page
+@model NutriTrack.Frontend.Pages.MealSearchModel
+@{
+    ViewData["Title"] = "Meal Search";
+}
+
+<h2>Meal Search</h2>
+<p class="text-muted">Search foods via the backend nutrition endpoint, then add a meal.</p>
+
+<form method="post" asp-page-handler="Search" class="mb-3">
+    <div class="input-group">
+        <input class="form-control" asp-for="Query" placeholder="e.g., banana" required />
+        <button class="btn btn-primary">Search</button>
+    </div>
+</form>
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+<div class="alert alert-info">@Model.Message</div>
+}
+
+@if (Model.Results.Count > 0)
+{
+<h4>Results</h4>
+<div class="list-group">
+    @foreach (var r in Model.Results)
+        {
+    <div class="list-group-item">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <div style="font-weight:600;">@r.Description</div>
+                <div class="text-muted">Calories (best-effort): @r.Calories</div>
+            </div>
+
+            <form method="post" asp-page-handler="Add" class="mb-0">
+                <input type="hidden" name="Food" value="@r.Description" />
+                <input type="hidden" name="Calories" value="@r.Calories" />
+                <button class="btn btn-success">Add</button>
+            </form>
+        </div>
+    </div>
+        }
+</div>
+}
+
+<a class="btn btn-link mt-3" href="/">Back to Dashboard</a>
