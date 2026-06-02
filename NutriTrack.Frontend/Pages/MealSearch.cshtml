@@ -4,43 +4,66 @@
     ViewData["Title"] = "Meal Search";
 }
 
-<h2>Meal Search</h2>
-<p class="text-muted">Search foods via the backend nutrition endpoint, then add a meal.</p>
+<div class="page-header">
+    <h1>Meal Search</h1>
+    <p>Search foods, view nutrition details, and add meals to your daily tracker.</p>
+</div>
 
-<form method="post" asp-page-handler="Search" class="mb-3">
-    <div class="input-group">
-        <input class="form-control" asp-for="Query" placeholder="e.g., banana" required />
-        <button class="btn btn-primary">Search</button>
-    </div>
-</form>
+<div class="feature-card">
+    <form method="post" asp-page-handler="Search">
+        <label class="form-label fw-bold">Search food</label>
 
-@if (!string.IsNullOrEmpty(Model.Message))
-{
-<div class="alert alert-info">@Model.Message</div>
-}
+        <div class="input-group input-group-lg">
+            <input asp-for="Query" class="form-control" placeholder="e.g., banana, rice, chicken" />
+            <button class="btn btn-success" type="submit">Search</button>
+        </div>
+    </form>
+
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert alert-warning mt-3">
+            @Model.Message
+        </div>
+    }
+</div>
 
 @if (Model.Results.Count > 0)
 {
-<h4>Results</h4>
-<div class="list-group">
-    @foreach (var r in Model.Results)
-        {
-    <div class="list-group-item">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <div style="font-weight:600;">@r.Description</div>
-                <div class="text-muted">Calories (best-effort): @r.Calories</div>
-            </div>
+    <div class="feature-card mt-4">
+        <h3>Search Results</h3>
+        <p class="text-muted">Choose a food item to add to your daily tracker.</p>
 
-            <form method="post" asp-page-handler="Add" class="mb-0">
-                <input type="hidden" name="Food" value="@r.Description" />
-                <input type="hidden" name="Calories" value="@r.Calories" />
-                <button class="btn btn-success">Add</button>
-            </form>
+        <div class="list-group mt-3">
+            @foreach (var item in Model.Results)
+            {
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>@item.Description</strong>
+                        <div class="text-muted">@item.Calories kcal</div>
+                    </div>
+
+                    <form method="post" asp-page-handler="Add">
+                        <input type="hidden" name="food" value="@item.Description" />
+                        <input type="hidden" name="calories" value="@item.Calories" />
+                        <button class="btn btn-outline-success" type="submit">
+                            Add Meal
+                        </button>
+                    </form>
+                </div>
+            }
         </div>
     </div>
-        }
-</div>
+}
+else
+{
+    <div class="feature-card mt-4 text-center">
+        <h4>Start searching for meals</h4>
+        <p class="text-muted">
+            Try searching foods like banana, rice, chicken, egg, or pasta.
+        </p>
+    </div>
 }
 
-<a class="btn btn-link mt-3" href="/">Back to Dashboard</a>
+<a class="btn btn-outline-success mt-4" href="/">
+    Back to Dashboard
+</a>

@@ -4,32 +4,68 @@
     ViewData["Title"] = "Community";
 }
 
-<h2>Community</h2>
-<p class="text-muted">Prototype-only: posts are stored in session.</p>
+<div class="page-header">
+    <h1>Community</h1>
+    <p>Share healthy wins, recipes, and progress updates with other NutriTrack users.</p>
+</div>
 
-<form method="post" class="mb-3">
-    <div class="mb-2">
-        <label class="form-label">Share a win / recipe</label>
-        <textarea class="form-control" asp-for="NewPost" rows="3" required></textarea>
-    </div>
-    <button class="btn btn-primary">Post</button>
-</form>
+<div class="feature-card">
+
+    <form method="post">
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">
+                Share a win or recipe
+            </label>
+
+            <textarea class="form-control"
+                      asp-for="NewPost"
+                      rows="4"
+                      placeholder="Example: I meal-prepped healthy lunches for the whole week!">
+            </textarea>
+        </div>
+
+        <button class="btn btn-success">
+            Post Update
+        </button>
+
+    </form>
+
+</div>
 
 @if (Model.Posts.Count == 0)
 {
-<p class="text-muted">No posts yet. Add one above.</p>
+    <div class="feature-card mt-4 text-center">
+        <h4>No community posts yet</h4>
+        <p class="text-muted">
+            Be the first person to share a healthy achievement.
+        </p>
+    </div>
 }
 else
 {
-<div class="list-group">
-    @foreach (var p in Model.Posts.OrderByDescending(x => x.CreatedAt))
+    <div class="feature-card mt-4">
+
+        <h4 class="mb-3">Community Feed</h4>
+
+        @foreach (var p in Model.Posts.OrderByDescending(x => x.CreatedAt))
         {
-    <div class="list-group-item">
-        <div style="font-weight:600;">@p.Text</div>
-        <div class="text-muted">@p.CreatedAt</div>
-    </div>
+            <div class="border rounded p-3 mb-3">
+
+                <div class="fw-bold">
+                    @p.Text
+                </div>
+
+                <small class="text-muted">
+                    @p.CreatedAt
+                </small>
+
+            </div>
         }
-</div>
+
+    </div>
 }
 
-<a class="btn btn-link mt-3" href="/">Back to Dashboard</a>
+<a class="btn btn-outline-success mt-4" href="/">
+    Back to Dashboard
+</a>

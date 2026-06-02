@@ -1,20 +1,51 @@
 @page
 @model NutriTrack.Frontend.Pages.Account.LoginModel
+@{
+    ViewData["Title"] = "Login";
+}
 
-<h2>Login (Prototype)</h2>
-<p class="text-muted">Enter the UID (from registration). This prototype uses Session login.</p>
+<div class="login-wrapper">
+    <div class="login-card">
 
-<form method="post" class="mt-3">
-    <div class="mb-3">
-        <label class="form-label">UID</label>
-        <input class="form-control" asp-for="Uid" required />
+        <div class="login-left">
+            <h1>Welcome Back</h1>
+            <p>Continue tracking your meals, calories, and nutrition progress with NutriTrack.</p>
+            <p class="small mt-3">
+    Smart nutrition tracking for healthier living.
+</p>
+
+            <div class="feature-list">
+                <p>✔ Track daily calories</p>
+                <p>✔ Search meals and nutrition facts</p>
+                <p>✔ Monitor your progress</p>
+            </div>
+        </div>
+
+        <div class="login-right">
+            <h2>Login</h2>
+            <p class="text-muted">Enter your UID to access your dashboard.</p>
+
+            @if (!string.IsNullOrEmpty(Model.Error))
+            {
+                <div class="alert alert-danger">@Model.Error</div>
+            }
+
+            <form method="post">
+                <div class="mb-3">
+                    <label class="form-label">UID</label>
+                    <input asp-for="Uid" class="form-control form-control-lg" placeholder="Enter your UID" />
+                </div>
+
+                <button type="submit" class="btn btn-success btn-lg w-100">
+                    Login
+                </button>
+            </form>
+
+            <div class="mt-3 text-center">
+                <span class="text-muted">New user?</span>
+                <a href="/Account/Register">Create an account</a>
+            </div>
+        </div>
+
     </div>
-
-    <button class="btn btn-primary">Login</button>
-    <a class="btn btn-link" href="/Account/Register">Register</a>
-
-    @if (!string.IsNullOrEmpty(Model.Error))
-    {
-    <div class="alert alert-danger mt-3">@Model.Error</div>
-    }
-</form>
+</div>

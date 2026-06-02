@@ -4,47 +4,145 @@
     ViewData["Title"] = "Progress";
 }
 
-<h2>Progress</h2>
-<p class="text-muted">Prototype progress using meals stored in session.</p>
-
-<div class="card mb-3">
-    <div class="card-body">
-        <div class="text-muted">Today % of Goal</div>
-        <div style="font-size:2rem;font-weight:700;">@Model.TodayPercent%</div>
-
-        <div class="progress mt-2" style="height: 20px;">
-            <div class="progress-bar" role="progressbar" style="width:@Model.TodayPercent%"></div>
-        </div>
-
-        <div class="text-muted mt-2">Today Calories: @Model.TodayTotal / @Model.DailyGoal</div>
-    </div>
+<div class="page-header">
+    <h1>Progress</h1>
+    <p>Track your calorie goals and monitor your nutrition journey.</p>
 </div>
 
-<h4>Last 7 Days</h4>
+<div class="row g-4">
 
-@if (Model.Weekly.Count == 0)
-{
-<p class="text-muted">No data yet. Add meals first.</p>
-}
-else
-{
-<table class="table">
-    <thead>
-        <tr>
-            <th>Date</th>
-            <th>Total Calories</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var row in Model.Weekly)
-        {
-        <tr>
-            <td>@row.Date.ToShortDateString()</td>
-            <td>@row.Total</td>
-        </tr>
-        }
-    </tbody>
-</table>
-}
+    <div class="col-md-4">
+        <div class="dashboard-card">
 
-<a class="btn btn-link" href="/">Back to Dashboard</a>
+            <p class="card-label">Today's Progress</p>
+
+            <h2>@Model.TodayPercent%</h2>
+
+            <p class="text-muted">Goal completed</p>
+
+            <div class="progress mt-3" style="height:20px;">
+                <div class="progress-bar bg-success"
+                     role="progressbar"
+                     style="width:@Model.TodayPercent%">
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="dashboard-card">
+
+            <p class="card-label">Calories Consumed</p>
+
+            <h2>@Model.TodayTotal</h2>
+
+            <p class="text-muted">
+                Out of @Model.DailyGoal kcal
+            </p>
+
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="dashboard-card">
+
+            <p class="card-label">Remaining</p>
+
+            <h2>
+                @Math.Max(0, Model.DailyGoal - Model.TodayTotal)
+            </h2>
+
+            <p class="text-muted">
+                Calories left today
+            </p>
+
+        </div>
+    </div>
+
+</div>
+
+<div class="feature-card mt-4">
+
+    <h3>Last 7 Days</h3>
+
+    @if (Model.Weekly.Count == 0)
+    {
+        <div class="empty-state text-center mt-4">
+
+            <h5>No progress data available</h5>
+
+            <p class="text-muted">
+                Start adding meals to track your nutrition.
+            </p>
+
+            <a href="/MealSearch" class="btn btn-success">
+                Add Meals
+            </a>
+
+        </div>
+    }
+    else
+    {
+        <table class="table table-hover mt-4">
+
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Total Calories</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                @foreach (var row in Model.Weekly)
+                {
+                    <tr>
+
+                        <td>
+                            @row.Date.ToShortDateString()
+                        </td>
+
+                        <td>
+                            @row.Total kcal
+                        </td>
+
+                        <td>
+
+                            @if (row.Total == 0)
+                            {
+                                <span class="badge bg-secondary">
+                                    No Meals
+                                </span>
+                            }
+                            else if (row.Total <= Model.DailyGoal)
+                            {
+                                <span class="badge bg-success">
+                                    On Track
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark">
+                                    Over Goal
+                                </span>
+                            }
+
+                        </td>
+
+                    </tr>
+                }
+
+            </tbody>
+
+        </table>
+    }
+
+</div>
+
+<div class="mt-4">
+    <a href="/" class="btn btn-outline-success">
+        Back to Dashboard
+    </a>
+</div>

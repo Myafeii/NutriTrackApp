@@ -2,63 +2,111 @@
 @model NutriTrack.Frontend.Pages.IndexModel
 @{
     ViewData["Title"] = "Dashboard";
+
+    var progress = Model.DailyGoal > 0 
+        ? Math.Min((Model.TodayTotal / Model.DailyGoal) * 100, 100) 
+        : 0;
 }
 
-<div class="d-flex justify-content-between align-items-center">
+<div class="dashboard-hero">
     <div>
-        <h2>Dashboard</h2>
-        <p class="text-muted mb-0">UID: <strong>@Model.Uid</strong></p>
+        <p class="hero-badge">Nutrition Dashboard</p>
+        <h1>Welcome back, @Model.Uid</h1>
+        <p>Track your calories, meals, and progress in one simple dashboard.</p>
     </div>
-    <div>
-        <a class="btn btn-outline-secondary" href="/Account/Logout">Logout</a>
-    </div>
+
+    <a class="btn btn-light fw-bold" href="/MealSearch">
+        + Add Meal
+    </a>
 </div>
 
-<hr />
+<div class="row g-4 mt-3">
 
-<div class="row g-3">
     <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <div class="text-muted">Today’s Calories</div>
-                <div style="font-size: 2rem; font-weight: 700;">@Model.TodayTotal</div>
-                <div class="text-muted">Goal: @Model.DailyGoal</div>
+        <div class="dashboard-card">
+            <p class="card-label">Today’s Calories</p>
+            <h2>@Model.TodayTotal</h2>
+            <p class="text-muted">Daily goal: @Model.DailyGoal kcal</p>
+
+            <div class="progress mt-3">
+                <div class="progress-bar bg-success" style="width:@progress%"></div>
             </div>
+
+            <small class="text-muted">@Math.Round(progress)% of goal completed</small>
         </div>
     </div>
 
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-body">
-                <div class="text-muted">Quick Actions</div>
-                <div class="mt-2">
-                    <a class="btn btn-primary me-2" href="/MealSearch">Search & Add Meal</a>
-                    <a class="btn btn-outline-primary me-2" href="/Progress">Progress</a>
-                    <a class="btn btn-outline-primary" href="/Community">Community</a>
+    <div class="col-md-4">
+        <div class="dashboard-card">
+            <p class="card-label">Meals Logged</p>
+            <h2>@Model.Meals.Count</h2>
+            <p class="text-muted">Meals added today</p>
+            <a href="/MealSearch" class="btn btn-outline-success btn-sm mt-2">Search Meals</a>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="dashboard-card">
+            <p class="card-label">Status</p>
+            <h2>Active</h2>
+            <p class="text-muted">Keep building healthy habits.</p>
+            <span class="badge bg-success">On Track</span>
+        </div>
+    </div>
+
+</div>
+
+<div class="quick-panel mt-4">
+    <h4>Quick Actions</h4>
+
+    <div class="quick-action-grid">
+        <a href="/MealSearch" class="quick-action-card">
+            <span>🍽️</span>
+            <strong>Search & Add Meal</strong>
+            <small>Find foods and log calories</small>
+        </a>
+
+        <a href="/Progress" class="quick-action-card">
+            <span>📈</span>
+            <strong>View Progress</strong>
+            <small>Track your nutrition journey</small>
+        </a>
+
+        <a href="/Community" class="quick-action-card">
+            <span>👥</span>
+            <strong>Community</strong>
+            <small>Share goals and stay motivated</small>
+        </a>
+    </div>
+</div>
+
+<div class="recent-section mt-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <h4>Recent Meals</h4>
+        <a href="/MealSearch" class="text-success fw-bold">Add Meal</a>
+    </div>
+
+    @if (Model.Meals.Count == 0)
+    {
+        <div class="empty-state mt-3">
+            <h5>No meals logged yet</h5>
+            <p>Start by searching for a meal and adding it to your daily tracker.</p>
+            <a href="/MealSearch" class="btn btn-success">Add Your First Meal</a>
+        </div>
+    }
+    else
+    {
+        <div class="list-group mt-3">
+            @foreach (var meal in Model.Meals.OrderByDescending(m => m.CreatedAt).Take(5))
+            {
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>@meal.Food</strong>
+                        <div class="text-muted">@meal.CreatedAt</div>
+                    </div>
+                    <span class="badge bg-success">@meal.Calories kcal</span>
                 </div>
-            </div>
+            }
         </div>
-    </div>
+    }
 </div>
-
-<h4 class="mt-4">Recent Meals</h4>
-
-@if (Model.Meals.Count == 0)
-{
-<p class="text-muted">No meals yet. Add one from Meal Search.</p>
-}
-else
-{
-<div class="list-group">
-    @foreach (var m in Model.Meals.OrderByDescending(x => x.CreatedAt).Take(10))
-        {
-    <div class="list-group-item d-flex justify-content-between align-items-center">
-        <div>
-            <div style="font-weight:600;">@m.Food</div>
-            <div class="text-muted">@m.CreatedAt</div>
-        </div>
-        <div style="font-weight:700;">@m.Calories</div>
-    </div>
-        }
-</div>
-}
