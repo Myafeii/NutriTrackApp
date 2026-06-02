@@ -18,6 +18,10 @@ admin.initializeApp({
 });
 
 const db = admin.firestore();
+function isStrongPassword(password) {
+  const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
+  return regex.test(password);
+}
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -226,10 +230,18 @@ app.post("/register", async (req, res) => {
       });
     }
 
+    if (!isStrongPassword(password)) {
+      return res.status(400).json({
+        error:
+          "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.",
+      });
+    }
+
     const userRecord = await admin.auth().createUser({
       email,
       password,
       displayName: name,
+      emailVerified: false,
     });
 
     await db.collection("users").doc(userRecord.uid).set({
@@ -238,17 +250,35 @@ app.post("/register", async (req, res) => {
       createdAt: new Date(),
     });
 
+    const customToken = await admin.auth().createCustomToken(userRecord.uid);
+
+    const signInResponse = await axios.post(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=${process.env.FIREBASE_WEB_API_KEY}`,
+      {
+        token: customToken,
+        returnSecureToken: true,
+      },
+    );
+
+    await axios.post(
+      `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${process.env.FIREBASE_WEB_API_KEY}`,
+      {
+        requestType: "VERIFY_EMAIL",
+        idToken: signInResponse.data.idToken,
+      },
+    );
+
     res.json({
-      message: "User registered successfully",
+      message: "User registered. Verification email sent.",
       uid: userRecord.uid,
       email,
       name,
     });
   } catch (error) {
-    console.error("Register Error:", error.message);
+    console.error("Register Error:", error.response?.data || error.message);
 
     res.status(500).json({
-      error: error.message,
+      error: error.response?.data?.error?.message || error.message,
     });
   }
 });
@@ -275,6 +305,21 @@ app.post("/login", async (req, res) => {
       },
     );
 
+    const lookupResponse = await axios.post(
+      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${process.env.FIREBASE_WEB_API_KEY}`,
+      {
+        idToken: response.data.idToken,
+      },
+    );
+
+    const firebaseUser = lookupResponse.data.users[0];
+
+    if (!firebaseUser.emailVerified) {
+      return res.status(403).json({
+        error: "Please verify your email before logging in.",
+      });
+    }
+
     const uid = response.data.localId;
 
     const userDoc = await db.collection("users").doc(uid).get();
@@ -296,11 +341,11 @@ app.post("/login", async (req, res) => {
     console.error("Login Error:", error.response?.data || error.message);
 
     res.status(401).json({
-      error: "Invalid email or password",
+      error:
+        error.response?.data?.error?.message || "Invalid email or password",
     });
   }
 });
-
 // =====================================================
 // START SERVER
 // =====================================================

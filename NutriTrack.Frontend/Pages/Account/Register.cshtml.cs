@@ -40,7 +40,7 @@ public class RegisterModel : PageModel
             return Page();
         }
 
-        TempData["Success"] = "Account created successfully. Please login.";
+       TempData["Success"] = "Account created successfully. Please check your email and verify your account before logging in.";
 return RedirectToPage("/Account/Login");
     }
 }
