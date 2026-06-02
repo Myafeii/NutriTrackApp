@@ -10,9 +10,10 @@
         <div class="login-left">
             <h1>Welcome Back</h1>
             <p>Continue tracking your meals, calories, and nutrition progress with NutriTrack.</p>
+
             <p class="small mt-3">
-    Smart nutrition tracking for healthier living.
-</p>
+                Smart nutrition tracking for healthier living.
+            </p>
 
             <div class="feature-list">
                 <p>✔ Track daily calories</p>
@@ -23,20 +24,37 @@
 
         <div class="login-right">
             <h2>Login</h2>
-            <p class="text-muted">Enter your UID to access your dashboard.</p>
+            <p class="text-muted">Enter your email and password to access your dashboard.</p>
 
             @if (!string.IsNullOrEmpty(Model.Error))
             {
                 <div class="alert alert-danger">@Model.Error</div>
             }
+            @if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Success"]
+    </div>
+}
 
             <form method="post">
                 <div class="mb-3">
-                    <label class="form-label">UID</label>
-                    <input asp-for="Uid" class="form-control form-control-lg" placeholder="Enter your UID" />
+                    <label class="form-label">Email</label>
+                    <input asp-for="Email"
+                           class="form-control form-control-lg"
+                           type="email"
+                           placeholder="Enter your email" />
                 </div>
 
-                <button type="submit" class="btn btn-success btn-lg w-100">
+                <div class="mb-3">
+                    <label class="form-label">Password</label>
+                    <input asp-for="Password"
+                           class="form-control form-control-lg"
+                           type="password"
+                           placeholder="Enter your password" />
+                </div>
+
+                <button type="submit" class="btn btn-success btn-lg w-100 fw-bold">
                     Login
                 </button>
             </form>
