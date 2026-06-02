@@ -40,7 +40,7 @@ public class RegisterModel : PageModel
             return Page();
         }
 
-        HttpContext.Session.SetString("uid", uid);
-        return RedirectToPage("/Index");
+        TempData["Success"] = "Account created successfully. Please login.";
+return RedirectToPage("/Account/Login");
     }
 }

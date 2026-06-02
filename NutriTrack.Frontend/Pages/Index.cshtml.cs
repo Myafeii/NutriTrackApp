@@ -7,6 +7,8 @@ namespace NutriTrack.Frontend.Pages;
 public class IndexModel : PageModel
 {
     public string Uid { get; set; } = "";
+    public string UserName { get; set; } = "";
+
     public List<MealItem> Meals { get; set; } = new();
     public double TodayTotal { get; set; }
     public int DailyGoal { get; set; } = 2000;
@@ -14,6 +16,8 @@ public class IndexModel : PageModel
     public void OnGet()
     {
         Uid = HttpContext.Session.GetString("uid") ?? "";
+        UserName = HttpContext.Session.GetString("name") ?? "User";
+
         Meals = HttpContext.Session.GetObject<List<MealItem>>("meals") ?? new List<MealItem>();
 
         var today = DateTime.Today;

@@ -116,8 +116,10 @@ app.post("/register", async (req, res) => {
     });
 
     res.json({
-      message: "User registered",
+      message: "User registered successfully",
       uid: userRecord.uid,
+      email,
+      name,
     });
   } catch (error) {
     console.error("Register Error:", error.message);
@@ -133,24 +135,45 @@ app.post("/register", async (req, res) => {
 // =====================================================
 app.post("/login", async (req, res) => {
   try {
-    const { uid } = req.body;
+    const { email, password } = req.body;
 
-    if (!uid) {
+    if (!email || !password) {
       return res.status(400).json({
-        error: "UID required",
+        error: "Email and password are required",
       });
     }
 
-    const token = await admin.auth().createCustomToken(uid);
+    const response = await axios.post(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${process.env.FIREBASE_WEB_API_KEY}`,
+      {
+        email,
+        password,
+        returnSecureToken: true,
+      },
+    );
+
+    const uid = response.data.localId;
+
+    const userDoc = await db.collection("users").doc(uid).get();
+
+    let name = "User";
+
+    if (userDoc.exists && userDoc.data().name) {
+      name = userDoc.data().name;
+    }
 
     res.json({
-      token,
+      message: "Login successful",
+      uid,
+      email: response.data.email,
+      name,
+      idToken: response.data.idToken,
     });
   } catch (error) {
-    console.error("Login Error:", error.message);
+    console.error("Login Error:", error.response?.data || error.message);
 
-    res.status(500).json({
-      error: error.message,
+    res.status(401).json({
+      error: "Invalid email or password",
     });
   }
 });
