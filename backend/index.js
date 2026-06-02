@@ -104,40 +104,42 @@ app.post("/recognize-food", upload.single("image"), async (req, res) => {
     const detectedFood = geminiResponse.text.trim();
 
     const usdaResponse = await axios.get(
-    "https://api.nal.usda.gov/fdc/v1/foods/search",
-    {
-      params: {
-        query: detectedFood,
-        api_key: process.env.USDA_API_KEY,
-        pageSize: 1,
+      "https://api.nal.usda.gov/fdc/v1/foods/search",
+      {
+        params: {
+          query: detectedFood,
+          api_key: process.env.USDA_API_KEY,
+          pageSize: 1,
+        },
       },
-    }
-  );
+    );
 
-  const food = usdaResponse.data.foods[0];
+    const food = usdaResponse.data.foods[0];
 
-  const calories =
-    food.foodNutrients.find((n) => n.nutrientId === 1008)?.value || 0;
+    const calories =
+      food.foodNutrients.find((n) => n.nutrientId === 1008)?.value || 0;
 
-  const protein =
-    food.foodNutrients.find((n) => n.nutrientId === 1003)?.value || 0;
+    const protein =
+      food.foodNutrients.find((n) => n.nutrientId === 1003)?.value || 0;
 
-  const carbs =
-    food.foodNutrients.find((n) => n.nutrientId === 1005)?.value || 0;
+    const carbs =
+      food.foodNutrients.find((n) => n.nutrientId === 1005)?.value || 0;
 
-  const fat =
-    food.foodNutrients.find((n) => n.nutrientId === 1004)?.value || 0;
+    const fat =
+      food.foodNutrients.find((n) => n.nutrientId === 1004)?.value || 0;
 
-  res.json({
-    detectedFood,
-    calories,
-    protein,
-    carbs,
-    fat,
-  });
-  
+    res.json({
+      detectedFood,
+      calories,
+      protein,
+      carbs,
+      fat,
+    });
   } catch (error) {
-    console.error("Food Recognition Error:", error.response?.data || error.message);
+    console.error(
+      "Food Recognition Error:",
+      error.response?.data || error.message,
+    );
 
     res.status(500).json({
       error: "Food recognition failed",
@@ -145,45 +147,6 @@ app.post("/recognize-food", upload.single("image"), async (req, res) => {
     });
   }
 });
-// app.post("/recognize-food", upload.single("image"), async (req, res) => {
-//   try {
-//     if (!req.file) {
-//       return res.status(400).json({
-//         error: "No image uploaded",
-//       });
-//     }
-
-//     const base64Image = req.file.buffer.toString("base64");
-
-//     const response = await ai.models.generateContent({
-//       model: "gemini-2.5-flash",
-//       contents: [
-//         {
-//           inlineData: {
-//             mimeType: req.file.mimetype,
-//             data: base64Image,
-//           },
-//         },
-//         {
-//           text: "Identify the food in this image. Return only the food name.",
-//         },
-//       ],
-//     });
-
-//     const detectedFood = response.text.trim();
-
-//     res.json({
-//       detectedFood,
-//     });
-//   } catch (error) {
-//     console.error("Food Recognition Error:", error.message);
-
-//     res.status(500).json({
-//       error: "Food recognition failed",
-//       details: error.message,
-//     });
-//   }
-// });
 
 // =====================================================
 // SAVE MEAL

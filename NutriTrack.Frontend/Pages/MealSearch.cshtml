@@ -6,16 +6,59 @@
 
 <div class="page-header">
     <h1>Meal Search</h1>
-    <p>Search foods, view nutrition details, and add meals to your daily tracker.</p>
+    <p>Search foods, upload food images, view nutrition details, and add meals to your daily tracker.</p>
 </div>
 
 <div class="feature-card">
+
     <form method="post" asp-page-handler="Search">
         <label class="form-label fw-bold">Search food</label>
 
         <div class="input-group input-group-lg">
             <input asp-for="Query" class="form-control" placeholder="e.g., banana, rice, chicken" />
             <button class="btn btn-success" type="submit">Search</button>
+        </div>
+    </form>
+
+    <div class="text-center my-4">
+        <span class="badge bg-light text-success border px-3 py-2">
+            OR USE AI FOOD RECOGNITION
+        </span>
+    </div>
+
+    <form method="post"
+          asp-page-handler="RecognizeFood"
+          enctype="multipart/form-data"
+          onsubmit="showLoading()">
+
+        <div class="ai-upload-box">
+            <div class="ai-upload-icon">📷</div>
+
+            <h4>Upload Food Image</h4>
+            <p class="text-muted">
+                AI will recognize your food and calculate nutrition automatically.
+            </p>
+
+            <input type="file"
+                   name="FoodImage"
+                   id="foodImageInput"
+                   class="form-control form-control-lg mt-3"
+                   accept="image/*"
+                   required
+                   onchange="previewImage(event)" />
+
+            <img id="imagePreview"
+                 class="image-preview mt-3"
+                 style="display:none;" />
+
+            <button class="btn btn-success btn-lg mt-3 px-5" type="submit">
+                Recognize Food
+            </button>
+
+            <div id="loadingBox" class="mt-3" style="display:none;">
+                <div class="spinner-border text-success" role="status"></div>
+                <p class="text-muted mt-2">Analyzing image with AI...</p>
+            </div>
         </div>
     </form>
 
@@ -27,7 +70,67 @@
     }
 </div>
 
-@if (Model.Results.Count > 0)
+@if (Model.RecognizedFood != null)
+{
+    <div class="feature-card mt-4">
+
+        @if (!string.IsNullOrEmpty(Model.UploadedImageBase64))
+        {
+            <div class="text-center mb-4">
+                <img src="@Model.UploadedImageBase64"
+                     class="uploaded-food-image" />
+            </div>
+        }
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h3 class="mb-1">AI Recognition Result</h3>
+                <p class="text-muted mb-0">Food recognized using AI image analysis.</p>
+            </div>
+
+            <span class="badge bg-success px-3 py-2">
+                AI Detected
+            </span>
+        </div>
+
+        <div class="ai-result-card">
+            <h4>@Model.RecognizedFood.DetectedFood</h4>
+            <p class="text-muted">Estimated nutrition using USDA food data.</p>
+
+            <div class="nutrition-grid mt-4">
+                <div class="nutrition-box">
+                    <h5>@Model.RecognizedFood.Calories</h5>
+                    <p>Calories</p>
+                </div>
+
+                <div class="nutrition-box">
+                    <h5>@Model.RecognizedFood.Protein g</h5>
+                    <p>Protein</p>
+                </div>
+
+                <div class="nutrition-box">
+                    <h5>@Model.RecognizedFood.Carbs g</h5>
+                    <p>Carbs</p>
+                </div>
+
+                <div class="nutrition-box">
+                    <h5>@Model.RecognizedFood.Fat g</h5>
+                    <p>Fat</p>
+                </div>
+            </div>
+
+            <form method="post" asp-page-handler="Add" class="mt-4">
+                <input type="hidden" name="food" value="@Model.RecognizedFood.DetectedFood" />
+                <input type="hidden" name="calories" value="@Model.RecognizedFood.Calories" />
+
+                <button class="btn btn-outline-success btn-lg" type="submit">
+                    + Add to Daily Tracker
+                </button>
+            </form>
+        </div>
+    </div>
+}
+else if (Model.Results.Count > 0)
 {
     <div class="feature-card mt-4">
         <h3>Search Results</h3>
@@ -59,7 +162,7 @@ else
     <div class="feature-card mt-4 text-center">
         <h4>Start searching for meals</h4>
         <p class="text-muted">
-            Try searching foods like banana, rice, chicken, egg, or pasta.
+            Try searching foods like banana, rice, chicken, egg, or pasta, or upload a food image.
         </p>
     </div>
 }
@@ -67,3 +170,21 @@ else
 <a class="btn btn-outline-success mt-4" href="/">
     Back to Dashboard
 </a>
+
+@section Scripts {
+    <script>
+        function previewImage(event) {
+            const preview = document.getElementById("imagePreview");
+            const file = event.target.files[0];
+
+            if (file) {
+                preview.src = URL.createObjectURL(file);
+                preview.style.display = "block";
+            }
+        }
+
+        function showLoading() {
+            document.getElementById("loadingBox").style.display = "block";
+        }
+    </script>
+}
