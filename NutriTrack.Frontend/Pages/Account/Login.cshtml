@@ -28,19 +28,19 @@
 
             @if (!string.IsNullOrEmpty(Model.Error))
             {
-                <div class="alert alert-danger">@Model.Error</div>
+            <div class="alert alert-danger">@Model.Error</div>
             }
             @if (TempData["Success"] != null)
 {
-    <div class="alert alert-success">
-        @TempData["Success"]
-    </div>
+            <div class="alert alert-success">
+                @TempData["Success"]
+            </div>
 }
-@if (TempData["Success"] != null)
+            @if (TempData["Success"] != null)
 {
-    <div class="alert alert-success">
-        @TempData["Success"]
-    </div>
+            <div class="alert alert-success">
+                @TempData["Success"]
+            </div>
 }
 
             <form method="post">
@@ -64,6 +64,9 @@
                     Login
                 </button>
             </form>
+            <div class="mt-2">
+                <a href="/Account/ForgotPassword">Forgot password?</a>
+            </div>
 
             <div class="mt-3 text-center">
                 <span class="text-muted">New user?</span>

@@ -136,7 +136,7 @@ public class MealSearchModel : PageModel
         var uid = HttpContext.Session.GetString("uid") ?? "";
         if (string.IsNullOrEmpty(uid)) return RedirectToPage("/Account/Login");
 
-        var (ok, err) = await _api.SaveMealAsync(new MealRequest
+        var (ok, mealId, err) = await _api.SaveMealAsync(new MealRequest
         {
             Uid = uid,
             Food = food,
@@ -150,7 +150,10 @@ public class MealSearchModel : PageModel
         }
 
         var meals = HttpContext.Session.GetObject<List<MealItem>>("meals") ?? new List<MealItem>();
-        meals.Add(new MealItem { Food = food, Calories = calories, CreatedAt = DateTime.Now });
+        meals.Add(new MealItem { Id = mealId, Food = food, Calories = calories, CreatedAt = DateTime.Now });
+        HttpContext.Session.SetObject("meals", meals);
+
+        return RedirectToPage("/Index");
         HttpContext.Session.SetObject("meals", meals);
 
         return RedirectToPage("/Index");

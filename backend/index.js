@@ -161,16 +161,17 @@ app.post("/meals", async (req, res) => {
       });
     }
 
-    await db.collection("meals").add({
-      uid,
-      food,
-      calories,
-      createdAt: new Date(),
-    });
+      const docRef = await db.collection("meals").add({
+          uid,
+          food,
+          calories,
+          createdAt: new Date(),
+      });
 
-    res.json({
-      message: "Meal saved successfully",
-    });
+      res.json({
+          message: "Meal saved successfully",
+          id: docRef.id,
+      });
   } catch (error) {
     console.error("Meal Save Error:", error.message);
 
@@ -178,6 +179,63 @@ app.post("/meals", async (req, res) => {
       error: error.message,
     });
   }
+});
+
+app.get("/meals", async (req, res) => {
+    try {
+        const { uid } = req.query;
+        if (!uid) return res.status(400).json({ error: "uid is required" });
+
+        const snap = await db.collection("meals").where("uid", "==", uid).get();
+
+        const meals = snap.docs.map((d) => {
+            const data = d.data();
+            return {
+                id: d.id,
+                uid: data.uid,
+                food: data.food,
+                calories: data.calories,
+                createdAt: data.createdAt,
+            };
+        });
+
+        // newest first
+        meals.sort((a, b) => {
+            const ta = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt).getTime();
+            const tb = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt).getTime();
+            return tb - ta;
+        });
+
+        return res.json({ meals });
+    } catch (err) {
+        console.error("Get Meals Error:", err.message);
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete("/meals/:id", async (req, res) => {
+    try {
+        const mealId = req.params.id;
+        const uid = req.query.uid;
+
+        if (!mealId || !uid) {
+            return res.status(400).json({ error: "mealId and uid required" });
+        }
+
+        const ref = db.collection("meals").doc(mealId);
+        const snap = await ref.get();
+
+        if (!snap.exists) return res.status(404).json({ error: "Meal not found" });
+
+        const data = snap.data();
+        if (data.uid !== uid) return res.status(403).json({ error: "Not allowed" });
+
+        await ref.delete();
+        return res.json({ message: "Meal deleted" });
+    } catch (err) {
+        console.error("Delete Meal Error:", err.message);
+        return res.status(500).json({ error: err.message });
+    }
 });
 
 // =====================================================
@@ -308,6 +366,26 @@ app.post("/login", async (req, res) => {
         error.response?.data?.error?.message || "Invalid email or password",
     });
   }
+});
+
+app.post("/reset-password", async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) return res.status(400).json({ error: "Email is required" });
+        if (!process.env.FIREBASE_WEB_API_KEY) {
+            return res.status(500).json({ error: "Missing FIREBASE_WEB_API_KEY in .env" });
+        }
+
+        const url = `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${process.env.FIREBASE_WEB_API_KEY}`;
+
+        await axios.post(url, { requestType: "PASSWORD_RESET", email });
+
+        return res.json({ message: "Password reset email sent." });
+    } catch (err) {
+        console.error("Reset Password Error:", err.response?.data || err.message);
+        return res.status(500).json({ error: "Reset password failed", details: err.response?.data || err.message });
+    }
 });
 // =====================================================
 // START SERVER

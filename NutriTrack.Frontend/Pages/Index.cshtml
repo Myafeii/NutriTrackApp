@@ -104,7 +104,14 @@
                         <strong>@meal.Food</strong>
                         <div class="text-muted">@meal.CreatedAt</div>
                     </div>
-                    <span class="badge bg-success">@meal.Calories kcal</span>
+                    <div class="d-flex gap-2 align-items-center">
+                        <span class="badge bg-success">@meal.Calories kcal</span>
+
+                        <form method="post" asp-page-handler="Delete" class="mb-0">
+                            <input type="hidden" name="mealId" value="@meal.Id" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                        </form>
+                    </div>
                 </div>
             }
         </div>
