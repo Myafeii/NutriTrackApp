@@ -44,39 +44,45 @@
     </div>
 
     <form
-        method="post"
-        asp-page-handler="RecognizeFood"
+        id="aiRecognitionForm"
         enctype="multipart/form-data"
-        onsubmit="showLoading()">
+        onsubmit="recognizeFoodImages(event)">
 
         <div class="ai-upload-box">
             <div class="ai-upload-icon">
                 📷
             </div>
 
-            <h4>Upload Food Image</h4>
+            <h4>Upload Food Images</h4>
 
             <p class="text-muted">
-                AI will recognize your food and calculate nutrition
-                automatically.
+                Select up to five JPEG, PNG, or WebP images. AI will recognize
+                each food and retrieve estimated nutrition information.
             </p>
 
             <input
                 type="file"
-                name="FoodImage"
+                name="images"
                 id="foodImageInput"
                 class="form-control form-control-lg mt-3"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
                 required
-                onchange="previewImage(event)" />
+                onchange="previewImages(event)" />
 
-            <img
-                id="imagePreview"
-                class="image-preview mt-3"
-                alt="Selected food preview"
-                style="display:none;" />
+            <div
+                id="imagePreviewGrid"
+                class="row g-3 mt-2">
+            </div>
+
+            <div
+                id="aiUploadMessage"
+                class="alert mt-3"
+                style="display:none;">
+            </div>
 
             <button
+                id="recognizeFoodButton"
                 class="btn btn-success btn-lg mt-3 px-5"
                 type="submit">
                 Recognize Food
@@ -93,7 +99,7 @@
                 </div>
 
                 <p class="text-muted mt-2">
-                    Analyzing image with AI...
+                    Analyzing images with AI...
                 </p>
             </div>
         </div>
@@ -357,106 +363,35 @@
     }
 </div>
 
-<!-- AI RESULT -->
-@if (Model.RecognizedFood != null)
-{
-    <div class="feature-card mt-4">
+<!-- CLIENT-SIDE AI RESULTS -->
+<div
+    id="aiResultsSection"
+    class="feature-card mt-4"
+    style="display:none;">
 
-        @if (!string.IsNullOrEmpty(Model.UploadedImageBase64))
-        {
-            <div class="text-center mb-4">
-                <img
-                    src="@Model.UploadedImageBase64"
-                    class="uploaded-food-image"
-                    alt="Uploaded food" />
-            </div>
-        }
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h3 class="mb-1">AI Recognition Results</h3>
 
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-                <h3 class="mb-1">
-                    AI Recognition Result
-                </h3>
-
-                <p class="text-muted mb-0">
-                    Food recognized using AI image analysis.
-                </p>
-            </div>
-
-            <span class="badge bg-success px-3 py-2">
-                AI Detected
-            </span>
-        </div>
-
-        <div class="ai-result-card">
-            <h4>
-                @Model.RecognizedFood.DetectedFood
-            </h4>
-
-            <p class="text-muted">
-                Estimated nutrition using USDA food data.
+            <p class="text-muted mb-0">
+                Nutrition estimates are retrieved from USDA food data.
             </p>
-
-            <div class="nutrition-grid mt-4">
-
-                <div class="nutrition-box">
-                    <h5>
-                        @Model.RecognizedFood.Calories
-                    </h5>
-
-                    <p>Calories</p>
-                </div>
-
-                <div class="nutrition-box">
-                    <h5>
-                        @Model.RecognizedFood.Protein g
-                    </h5>
-
-                    <p>Protein</p>
-                </div>
-
-                <div class="nutrition-box">
-                    <h5>
-                        @Model.RecognizedFood.Carbs g
-                    </h5>
-
-                    <p>Carbs</p>
-                </div>
-
-                <div class="nutrition-box">
-                    <h5>
-                        @Model.RecognizedFood.Fat g
-                    </h5>
-
-                    <p>Fat</p>
-                </div>
-            </div>
-
-            <form
-                method="post"
-                asp-page-handler="Add"
-                class="mt-4">
-
-                <input
-                    type="hidden"
-                    name="food"
-                    value="@Model.RecognizedFood.DetectedFood" />
-
-                <input
-                    type="hidden"
-                    name="calories"
-                    value="@Model.RecognizedFood.Calories" />
-
-                <button
-                    class="btn btn-outline-success btn-lg"
-                    type="submit">
-                    + Add to Daily Tracker
-                </button>
-            </form>
         </div>
+
+        <span
+            id="aiResultCount"
+            class="badge bg-success px-3 py-2">
+            0 Results
+        </span>
     </div>
-}
-else if (Model.Results.Count > 0)
+
+    <div
+        id="aiResultsContainer"
+        class="row g-4">
+    </div>
+</div>
+
+@if (Model.Results.Count > 0)
 {
     <!-- SEARCH RESULTS -->
     <div class="feature-card mt-4">
@@ -507,14 +442,17 @@ else if (Model.Results.Count > 0)
 }
 else
 {
-    <div class="feature-card mt-4 text-center">
+    <div
+        id="mealSearchEmptyState"
+        class="feature-card mt-4 text-center">
+
         <h4>
             Start searching for meals
         </h4>
 
         <p class="text-muted">
             Try searching foods like banana, rice, chicken,
-            egg, or pasta, upload a food image, or scan a barcode.
+            egg, or pasta, upload food images, or scan a barcode.
         </p>
     </div>
 }
@@ -564,27 +502,389 @@ else
         const barcodeAddMealForm =
             document.getElementById("barcodeAddMealForm");
 
-        function previewImage(event) {
-            const preview =
-                document.getElementById("imagePreview");
+        const AI_BACKEND_URL =
+            "http://localhost:5000/recognize-food";
 
-            const file = event.target.files[0];
+        function previewImages(event) {
+            const files = Array.from(event.target.files || []);
+            const previewGrid =
+                document.getElementById("imagePreviewGrid");
 
-            if (file) {
-                preview.src =
-                    URL.createObjectURL(file);
+            previewGrid.innerHTML = "";
+            hideAiMessage();
 
-                preview.style.display = "block";
+            if (files.length > 5) {
+                event.target.value = "";
+
+                showAiMessage(
+                    "You can select a maximum of five images.",
+                    true
+                );
+
+                return;
             }
+
+            files.forEach(file => {
+                const column = document.createElement("div");
+                column.className = "col-6 col-md-4 col-lg-3";
+
+                const image = document.createElement("img");
+                image.src = URL.createObjectURL(file);
+                image.alt = file.name;
+                image.className =
+                    "img-fluid rounded border w-100";
+                image.style.height = "160px";
+                image.style.objectFit = "cover";
+
+                image.addEventListener(
+                    "load",
+                    () => URL.revokeObjectURL(image.src),
+                    { once: true }
+                );
+
+                const fileName = document.createElement("small");
+                fileName.className =
+                    "d-block text-muted text-truncate mt-1";
+                fileName.textContent = file.name;
+
+                column.appendChild(image);
+                column.appendChild(fileName);
+                previewGrid.appendChild(column);
+            });
         }
 
-        function showLoading() {
+        function showAiLoading(isLoading) {
             const loadingBox =
                 document.getElementById("loadingBox");
 
-            if (loadingBox) {
-                loadingBox.style.display = "block";
+            const recognizeButton =
+                document.getElementById("recognizeFoodButton");
+
+            loadingBox.style.display =
+                isLoading ? "block" : "none";
+
+            recognizeButton.disabled = isLoading;
+            recognizeButton.textContent =
+                isLoading ? "Recognizing..." : "Recognize Food";
+        }
+
+        function showAiMessage(message, isError = false) {
+            const messageBox =
+                document.getElementById("aiUploadMessage");
+
+            messageBox.textContent = message;
+            messageBox.className =
+                isError
+                    ? "alert alert-danger mt-3"
+                    : "alert alert-success mt-3";
+
+            messageBox.style.display = "block";
+        }
+
+        function hideAiMessage() {
+            const messageBox =
+                document.getElementById("aiUploadMessage");
+
+            messageBox.textContent = "";
+            messageBox.style.display = "none";
+        }
+
+        async function recognizeFoodImages(event) {
+            event.preventDefault();
+            hideAiMessage();
+
+            const input =
+                document.getElementById("foodImageInput");
+
+            const files = Array.from(input.files || []);
+
+            if (files.length === 0) {
+                showAiMessage(
+                    "Please select at least one food image.",
+                    true
+                );
+
+                return;
             }
+
+            if (files.length > 5) {
+                showAiMessage(
+                    "You can upload a maximum of five images.",
+                    true
+                );
+
+                return;
+            }
+
+            const allowedTypes = [
+                "image/jpeg",
+                "image/png",
+                "image/webp"
+            ];
+
+            const invalidFile =
+                files.find(file =>
+                    !allowedTypes.includes(file.type)
+                );
+
+            if (invalidFile) {
+                showAiMessage(
+                    `${invalidFile.name} is not a supported image type.`,
+                    true
+                );
+
+                return;
+            }
+
+            const formData = new FormData();
+
+            files.forEach(file => {
+                formData.append("images", file);
+            });
+
+            showAiLoading(true);
+
+            try {
+                const response = await fetch(
+                    AI_BACKEND_URL,
+                    {
+                        method: "POST",
+                        body: formData
+                    }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.error ||
+                        data.details ||
+                        "Food recognition failed."
+                    );
+                }
+
+                if (!Array.isArray(data.results)) {
+                    throw new Error(
+                        "The backend returned an invalid response."
+                    );
+                }
+
+                displayAiResults(data.results);
+
+                showAiMessage(
+                    `${data.imageCount || files.length} image(s) processed successfully.`
+                );
+            }
+            catch (error) {
+                console.error(
+                    "AI food recognition error:",
+                    error
+                );
+
+                showAiMessage(
+                    error.message ||
+                    "Unable to recognize the selected images.",
+                    true
+                );
+            }
+            finally {
+                showAiLoading(false);
+            }
+        }
+
+        function displayAiResults(results) {
+            const section =
+                document.getElementById("aiResultsSection");
+
+            const container =
+                document.getElementById("aiResultsContainer");
+
+            const count =
+                document.getElementById("aiResultCount");
+
+            const emptyState =
+                document.getElementById("mealSearchEmptyState");
+
+            container.innerHTML = "";
+            count.textContent =
+                `${results.length} Result${results.length === 1 ? "" : "s"}`;
+
+            results.forEach((result, index) => {
+                container.appendChild(
+                    createAiResultCard(result, index)
+                );
+            });
+
+            section.style.display = "block";
+
+            if (emptyState) {
+                emptyState.style.display = "none";
+            }
+
+            section.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+        }
+
+        function createAiResultCard(result, index) {
+            const column = document.createElement("div");
+            column.className = "col-12 col-lg-6";
+
+            const card = document.createElement("div");
+            card.className =
+                "ai-result-card h-100 border rounded p-4";
+
+            const fileName = escapeHtml(
+                result.fileName || `Image ${index + 1}`
+            );
+
+            if (result.error) {
+                card.innerHTML = `
+                    <div class="d-flex justify-content-between gap-3">
+                        <div>
+                            <h4 class="mb-1">${fileName}</h4>
+                            <p class="text-muted mb-2">
+                                ${
+                                    escapeHtml(
+                                        result.detectedFood ||
+                                        "Food not identified"
+                                    )
+                                }
+                            </p>
+                        </div>
+
+                        <span class="badge bg-danger align-self-start">
+                            Failed
+                        </span>
+                    </div>
+
+                    <div class="alert alert-warning mb-0">
+                        ${escapeHtml(result.error)}
+                    </div>
+                `;
+
+                column.appendChild(card);
+                return column;
+            }
+
+            const food =
+                result.detectedFood || "Recognized food";
+
+            const confidence =
+                formatAiNumber(result.confidence);
+
+            const calories =
+                formatAiNumber(result.calories);
+
+            const protein =
+                formatAiNumber(result.protein);
+
+            const carbs =
+                formatAiNumber(result.carbs);
+
+            const fat =
+                formatAiNumber(result.fat);
+
+            const antiForgeryToken =
+                document.querySelector(
+                    'input[name="__RequestVerificationToken"]'
+                )?.value || "";
+
+            card.innerHTML = `
+                <div class="d-flex justify-content-between gap-3 mb-3">
+                    <div>
+                        <small class="text-muted d-block mb-1">
+                            ${fileName}
+                        </small>
+
+                        <h4 class="mb-1">
+                            ${escapeHtml(food)}
+                        </h4>
+
+                        <p class="text-muted mb-0">
+                            Confidence: ${confidence}%
+                        </p>
+                    </div>
+
+                    <span class="badge bg-success align-self-start">
+                        AI Detected
+                    </span>
+                </div>
+
+                <div class="nutrition-grid mt-4">
+                    <div class="nutrition-box">
+                        <h5>${calories}</h5>
+                        <p>Calories</p>
+                    </div>
+
+                    <div class="nutrition-box">
+                        <h5>${protein} g</h5>
+                        <p>Protein</p>
+                    </div>
+
+                    <div class="nutrition-box">
+                        <h5>${carbs} g</h5>
+                        <p>Carbs</p>
+                    </div>
+
+                    <div class="nutrition-box">
+                        <h5>${fat} g</h5>
+                        <p>Fat</p>
+                    </div>
+                </div>
+
+                <form
+                    method="post"
+                    action="?handler=Add"
+                    class="mt-4">
+
+                    <input
+                        type="hidden"
+                        name="__RequestVerificationToken"
+                        value="${escapeHtml(antiForgeryToken)}" />
+
+                    <input
+                        type="hidden"
+                        name="food"
+                        value="${escapeHtml(food)}" />
+
+                    <input
+                        type="hidden"
+                        name="calories"
+                        value="${escapeHtml(String(result.calories ?? 0))}" />
+
+                    <button
+                        class="btn btn-outline-success btn-lg"
+                        type="submit">
+                        + Add to Daily Tracker
+                    </button>
+                </form>
+            `;
+
+            column.appendChild(card);
+            return column;
+        }
+
+        function formatAiNumber(value) {
+            const number = Number(value || 0);
+
+            if (!Number.isFinite(number)) {
+                return "0";
+            }
+
+            return Number.isInteger(number)
+                ? number.toString()
+                : number.toFixed(1);
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? "")
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#039;");
         }
 
         function setBarcodeMessage(

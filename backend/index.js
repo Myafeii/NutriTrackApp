@@ -80,49 +80,42 @@ app.get("/nutrition/:query", async (req, res) => {
 // =====================================================
 // AI FOOD IMAGE RECOGNITION
 // =====================================================
-app.post(
-  "/recognize-food",
-  upload.array("images", 5),
-  async (req, res) => {
-    try {
-      if (!req.files || req.files.length === 0) {
-        return res.status(400).json({
-          error: "No images uploaded",
+app.post("/recognize-food", upload.array("images", 5), async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        error: "No images uploaded",
+      });
+    }
+
+    const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"];
+
+    const results = [];
+
+    for (const file of req.files) {
+      if (!allowedImageTypes.includes(file.mimetype)) {
+        results.push({
+          fileName: file.originalname,
+          error: "Only JPEG, PNG, and WebP images are supported.",
         });
+
+        continue;
       }
 
-      const allowedImageTypes = [
-        "image/jpeg",
-        "image/png",
-        "image/webp",
-      ];
+      const base64Image = file.buffer.toString("base64");
 
-      const results = [];
+      const geminiResponse = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
 
-      for (const file of req.files) {
-        if (!allowedImageTypes.includes(file.mimetype)) {
-          results.push({
-            fileName: file.originalname,
-            error: "Only JPEG, PNG, and WebP images are supported.",
-          });
-
-          continue;
-        }
-
-        const base64Image = file.buffer.toString("base64");
-
-        const geminiResponse = await ai.models.generateContent({
-          model: "gemini-2.5-flash",
-
-          contents: [
-            {
-              inlineData: {
-                mimeType: file.mimetype,
-                data: base64Image,
-              },
+        contents: [
+          {
+            inlineData: {
+              mimeType: file.mimetype,
+              data: base64Image,
             },
-            {
-              text: `
+          },
+          {
+            text: `
                 Analyze this image and identify the main food item.
 
                 Return:
@@ -133,118 +126,111 @@ app.post(
                 food: "Unknown"
                 confidence: 0
               `,
-            },
-          ],
+          },
+        ],
 
-          config: {
-            responseMimeType: "application/json",
+        config: {
+          responseMimeType: "application/json",
 
-            responseJsonSchema: {
-              type: "object",
+          responseJsonSchema: {
+            type: "object",
 
-              properties: {
-                food: {
-                  type: "string",
-                  description:
-                    "The main food item identified in the image.",
-                },
-
-                confidence: {
-                  type: "integer",
-                  minimum: 0,
-                  maximum: 100,
-                  description:
-                    "An estimated confidence score from 0 to 100.",
-                },
+            properties: {
+              food: {
+                type: "string",
+                description: "The main food item identified in the image.",
               },
 
-              required: ["food", "confidence"],
+              confidence: {
+                type: "integer",
+                minimum: 0,
+                maximum: 100,
+                description: "An estimated confidence score from 0 to 100.",
+              },
             },
+
+            required: ["food", "confidence"],
           },
+        },
+      });
+
+      const recognition = JSON.parse(geminiResponse.text);
+
+      const detectedFood = recognition.food?.trim();
+      const confidence = Number(recognition.confidence);
+
+      if (
+        !detectedFood ||
+        detectedFood.toLowerCase() === "unknown" ||
+        !Number.isFinite(confidence) ||
+        confidence < 40
+      ) {
+        results.push({
+          fileName: file.originalname,
+          detectedFood: detectedFood || "Unknown",
+          confidence: Number.isFinite(confidence) ? confidence : 0,
+          error: "The food could not be identified confidently.",
         });
 
-        const recognition = JSON.parse(geminiResponse.text);
+        continue;
+      }
 
-        const detectedFood = recognition.food?.trim();
-        const confidence = Number(recognition.confidence);
-
-        if (
-          !detectedFood ||
-          detectedFood.toLowerCase() === "unknown" ||
-          !Number.isFinite(confidence) ||
-          confidence < 40
-        ) {
-          results.push({
-            fileName: file.originalname,
-            detectedFood: detectedFood || "Unknown",
-            confidence: Number.isFinite(confidence)
-              ? confidence
-              : 0,
-            error:
-              "The food could not be identified confidently.",
-          });
-
-          continue;
-        }
-
-        const usdaResponse = await axios.get(
-          "https://api.nal.usda.gov/fdc/v1/foods/search",
-          {
-            params: {
-              query: detectedFood,
-              api_key: process.env.USDA_API_KEY,
-              pageSize: 1,
-            },
+      const usdaResponse = await axios.get(
+        "https://api.nal.usda.gov/fdc/v1/foods/search",
+        {
+          params: {
+            query: detectedFood,
+            api_key: process.env.USDA_API_KEY,
+            pageSize: 1,
           },
-        );
+        },
+      );
 
-        if (!usdaResponse.data.foods?.length) {
-          results.push({
-            fileName: file.originalname,
-            detectedFood,
-            confidence,
-            error:
-              "No USDA nutrition information was found.",
-          });
-
-          continue;
-        }
-
-        const food = usdaResponse.data.foods[0];
-
-        const getNutrientValue = (nutrientId) =>
-          food.foodNutrients.find(
-            (nutrient) => nutrient.nutrientId === nutrientId,
-          )?.value ?? 0;
-
+      if (!usdaResponse.data.foods?.length) {
         results.push({
           fileName: file.originalname,
           detectedFood,
           confidence,
-          calories: getNutrientValue(1008),
-          protein: getNutrientValue(1003),
-          carbs: getNutrientValue(1005),
-          fat: getNutrientValue(1004),
+          error: "No USDA nutrition information was found.",
         });
+
+        continue;
       }
 
-      return res.json({
-        imageCount: req.files.length,
-        results,
-      });
-    } catch (error) {
-      console.error(
-        "Food Recognition Error:",
-        error.response?.data || error.message,
-      );
+      const food = usdaResponse.data.foods[0];
 
-      return res.status(500).json({
-        error: "Food recognition failed",
-        details: error.response?.data || error.message,
+      const getNutrientValue = (nutrientId) =>
+        food.foodNutrients.find(
+          (nutrient) => nutrient.nutrientId === nutrientId,
+        )?.value ?? 0;
+
+      results.push({
+        fileName: file.originalname,
+        detectedFood,
+        confidence,
+        calories: getNutrientValue(1008),
+        protein: getNutrientValue(1003),
+        carbs: getNutrientValue(1005),
+        fat: getNutrientValue(1004),
       });
     }
-  },
-);
+
+    return res.json({
+      imageCount: req.files.length,
+      results,
+    });
+  } catch (error) {
+    console.error(
+      "Food Recognition Error:",
+      error.response?.data || error.message,
+    );
+
+    return res.status(500).json({
+      error: "Food recognition failed",
+      details: error.response?.data || error.message,
+    });
+  }
+});
 
 // =====================================================
 // SAVE MEAL
@@ -488,12 +474,10 @@ app.post("/reset-password", async (req, res) => {
     return res.json({ message: "Password reset email sent." });
   } catch (err) {
     console.error("Reset Password Error:", err.response?.data || err.message);
-    return res
-      .status(500)
-      .json({
-        error: "Reset password failed",
-        details: err.response?.data || err.message,
-      });
+    return res.status(500).json({
+      error: "Reset password failed",
+      details: err.response?.data || err.message,
+    });
   }
 });
 
