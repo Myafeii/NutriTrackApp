@@ -25,6 +25,11 @@ function isStrongPassword(password) {
 
 const upload = multer({
   storage: multer.memoryStorage(),
+
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+    files: 5,
+  },
 });
 
 const ai = new GoogleGenAI({
@@ -75,78 +80,171 @@ app.get("/nutrition/:query", async (req, res) => {
 // =====================================================
 // AI FOOD IMAGE RECOGNITION
 // =====================================================
+app.post(
+  "/recognize-food",
+  upload.array("images", 5),
+  async (req, res) => {
+    try {
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).json({
+          error: "No images uploaded",
+        });
+      }
 
-app.post("/recognize-food", upload.single("image"), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({
-        error: "No image uploaded",
+      const allowedImageTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+      ];
+
+      const results = [];
+
+      for (const file of req.files) {
+        if (!allowedImageTypes.includes(file.mimetype)) {
+          results.push({
+            fileName: file.originalname,
+            error: "Only JPEG, PNG, and WebP images are supported.",
+          });
+
+          continue;
+        }
+
+        const base64Image = file.buffer.toString("base64");
+
+        const geminiResponse = await ai.models.generateContent({
+          model: "gemini-2.5-flash",
+
+          contents: [
+            {
+              inlineData: {
+                mimeType: file.mimetype,
+                data: base64Image,
+              },
+            },
+            {
+              text: `
+                Analyze this image and identify the main food item.
+
+                Return:
+                1. The main food name.
+                2. A confidence estimate from 0 to 100.
+
+                If no food is clearly visible, return:
+                food: "Unknown"
+                confidence: 0
+              `,
+            },
+          ],
+
+          config: {
+            responseMimeType: "application/json",
+
+            responseJsonSchema: {
+              type: "object",
+
+              properties: {
+                food: {
+                  type: "string",
+                  description:
+                    "The main food item identified in the image.",
+                },
+
+                confidence: {
+                  type: "integer",
+                  minimum: 0,
+                  maximum: 100,
+                  description:
+                    "An estimated confidence score from 0 to 100.",
+                },
+              },
+
+              required: ["food", "confidence"],
+            },
+          },
+        });
+
+        const recognition = JSON.parse(geminiResponse.text);
+
+        const detectedFood = recognition.food?.trim();
+        const confidence = Number(recognition.confidence);
+
+        if (
+          !detectedFood ||
+          detectedFood.toLowerCase() === "unknown" ||
+          !Number.isFinite(confidence) ||
+          confidence < 40
+        ) {
+          results.push({
+            fileName: file.originalname,
+            detectedFood: detectedFood || "Unknown",
+            confidence: Number.isFinite(confidence)
+              ? confidence
+              : 0,
+            error:
+              "The food could not be identified confidently.",
+          });
+
+          continue;
+        }
+
+        const usdaResponse = await axios.get(
+          "https://api.nal.usda.gov/fdc/v1/foods/search",
+          {
+            params: {
+              query: detectedFood,
+              api_key: process.env.USDA_API_KEY,
+              pageSize: 1,
+            },
+          },
+        );
+
+        if (!usdaResponse.data.foods?.length) {
+          results.push({
+            fileName: file.originalname,
+            detectedFood,
+            confidence,
+            error:
+              "No USDA nutrition information was found.",
+          });
+
+          continue;
+        }
+
+        const food = usdaResponse.data.foods[0];
+
+        const getNutrientValue = (nutrientId) =>
+          food.foodNutrients.find(
+            (nutrient) => nutrient.nutrientId === nutrientId,
+          )?.value ?? 0;
+
+        results.push({
+          fileName: file.originalname,
+          detectedFood,
+          confidence,
+          calories: getNutrientValue(1008),
+          protein: getNutrientValue(1003),
+          carbs: getNutrientValue(1005),
+          fat: getNutrientValue(1004),
+        });
+      }
+
+      return res.json({
+        imageCount: req.files.length,
+        results,
+      });
+    } catch (error) {
+      console.error(
+        "Food Recognition Error:",
+        error.response?.data || error.message,
+      );
+
+      return res.status(500).json({
+        error: "Food recognition failed",
+        details: error.response?.data || error.message,
       });
     }
-
-    const base64Image = req.file.buffer.toString("base64");
-
-    const geminiResponse = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: [
-        {
-          inlineData: {
-            mimeType: req.file.mimetype,
-            data: base64Image,
-          },
-        },
-        {
-          text: "Identify the main food in this image. Return only the food name.",
-        },
-      ],
-    });
-
-    const detectedFood = geminiResponse.text.trim();
-
-    const usdaResponse = await axios.get(
-      "https://api.nal.usda.gov/fdc/v1/foods/search",
-      {
-        params: {
-          query: detectedFood,
-          api_key: process.env.USDA_API_KEY,
-          pageSize: 1,
-        },
-      },
-    );
-
-    const food = usdaResponse.data.foods[0];
-
-    const calories =
-      food.foodNutrients.find((n) => n.nutrientId === 1008)?.value || 0;
-
-    const protein =
-      food.foodNutrients.find((n) => n.nutrientId === 1003)?.value || 0;
-
-    const carbs =
-      food.foodNutrients.find((n) => n.nutrientId === 1005)?.value || 0;
-
-    const fat =
-      food.foodNutrients.find((n) => n.nutrientId === 1004)?.value || 0;
-
-    res.json({
-      detectedFood,
-      calories,
-      protein,
-      carbs,
-      fat,
-    });
-  } catch (error) {
-    console.error(
-      "Food Recognition Error:",
-      error.response?.data || error.message,
-    );
-
-    res.status(500).json({
-      error: "Food recognition failed",
-      details: error.response?.data || error.message,
-    });
-  }
-});
+  },
+);
 
 // =====================================================
 // SAVE MEAL
