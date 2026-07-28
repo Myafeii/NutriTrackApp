@@ -317,3 +317,445 @@ body {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+.meal-method-divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 34px 0;
+    color: #178953;
+    font-size: 0.82rem;
+    font-weight: 800;
+}
+
+.meal-method-divider::before,
+.meal-method-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #dce8e2;
+}
+
+.barcode-search-card {
+    margin-top: 20px;
+    padding: 30px;
+    background: #ffffff;
+    border: 1px solid #e3ebe7;
+    border-radius: 24px;
+    box-shadow: 0 16px 42px rgba(33, 72, 58, 0.08);
+}
+
+.barcode-search-heading {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.barcode-search-icon {
+    display: grid;
+    place-items: center;
+    width: 58px;
+    height: 58px;
+    flex-shrink: 0;
+    border-radius: 17px;
+    background: #eaf8f0;
+    color: #188b53;
+    font-size: 1.7rem;
+    font-weight: 800;
+}
+
+.barcode-search-heading h2 {
+    margin: 0;
+    color: #18382d;
+    font-size: 1.55rem;
+}
+
+.barcode-search-heading p {
+    margin: 6px 0 0;
+    color: #687870;
+}
+
+.barcode-content-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(330px, 0.95fr);
+    gap: 24px;
+}
+
+.barcode-scanner-panel,
+.barcode-product-panel {
+    padding: 22px;
+    border: 1px solid #e3ebe7;
+    border-radius: 20px;
+    background: #fbfdfc;
+}
+
+.barcode-video-wrapper {
+    position: relative;
+    overflow: hidden;
+    min-height: 340px;
+    border-radius: 17px;
+    background: #16231e;
+}
+
+#barcodeVideo {
+    position: relative;
+    z-index: 2;
+    display: block;
+    width: 100%;
+    height: 340px;
+    object-fit: cover;
+}
+
+.barcode-video-placeholder {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: grid;
+    place-content: center;
+    text-align: center;
+    color: #b8c8c0;
+}
+
+.barcode-video-placeholder span {
+    font-size: 2.6rem;
+}
+
+.barcode-video-placeholder p {
+    margin: 8px 0 0;
+}
+
+.barcode-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+}
+
+.barcode-frame {
+    position: relative;
+    width: min(82%, 420px);
+    height: 135px;
+    border: 3px solid rgba(255, 255, 255, 0.92);
+    border-radius: 14px;
+    box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.18);
+}
+
+.barcode-line {
+    position: absolute;
+    left: 6%;
+    right: 6%;
+    top: 50%;
+    height: 3px;
+    border-radius: 10px;
+    background: #39df84;
+    box-shadow: 0 0 14px rgba(57, 223, 132, 0.9);
+    animation: barcodeMove 2s ease-in-out infinite;
+}
+
+@keyframes barcodeMove {
+    0%,
+    100% {
+        transform: translateY(-47px);
+    }
+
+    50% {
+        transform: translateY(47px);
+    }
+}
+
+.barcode-camera-status {
+    position: absolute;
+    z-index: 4;
+    top: 14px;
+    right: 14px;
+    padding: 7px 11px;
+    border-radius: 999px;
+    background: rgba(25, 35, 31, 0.74);
+    color: #ffffff;
+    font-size: 0.76rem;
+    font-weight: 750;
+}
+
+.barcode-camera-status.active {
+    background: rgba(24, 139, 83, 0.9);
+}
+
+.barcode-camera-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.barcode-main-button,
+.barcode-light-button,
+.barcode-add-meal-button {
+    border: 0;
+    border-radius: 12px;
+    padding: 12px 18px;
+    font-weight: 750;
+    cursor: pointer;
+}
+
+.barcode-main-button,
+.barcode-add-meal-button {
+    background: #188b53;
+    color: #ffffff;
+}
+
+.barcode-light-button {
+    background: #eaf0ed;
+    color: #314b40;
+}
+
+.barcode-main-button:disabled,
+.barcode-light-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.barcode-manual-entry {
+    margin-top: 22px;
+}
+
+.barcode-manual-entry label {
+    display: block;
+    margin-bottom: 9px;
+    color: #304a3f;
+    font-weight: 700;
+}
+
+.barcode-input-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+}
+
+.barcode-input-row input,
+.barcode-serving-section input {
+    width: 100%;
+    border: 1px solid #cfdcd6;
+    border-radius: 12px;
+    padding: 12px 14px;
+    outline: none;
+}
+
+.barcode-input-row input:focus,
+.barcode-serving-section input:focus {
+    border-color: #188b53;
+    box-shadow: 0 0 0 4px rgba(24, 139, 83, 0.1);
+}
+
+.barcode-message {
+    min-height: 24px;
+    margin-top: 15px;
+    font-size: 0.9rem;
+    font-weight: 650;
+}
+
+.barcode-success {
+    color: #188b53;
+}
+
+.barcode-error {
+    color: #c63f3f;
+}
+
+.barcode-product-panel {
+    min-height: 520px;
+}
+
+.barcode-empty-state,
+.barcode-loading {
+    min-height: 470px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #718079;
+}
+
+.barcode-empty-icon {
+    display: grid;
+    place-items: center;
+    width: 72px;
+    height: 72px;
+    margin-bottom: 16px;
+    border-radius: 20px;
+    background: #eaf8f0;
+    color: #188b53;
+    font-size: 2rem;
+}
+
+.barcode-empty-state h3 {
+    margin: 0 0 8px;
+    color: #27463a;
+}
+
+.barcode-empty-state p {
+    max-width: 310px;
+    margin: 0;
+}
+
+.barcode-spinner {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 15px;
+    border: 4px solid #e3ebe7;
+    border-top-color: #188b53;
+    border-radius: 50%;
+    animation: barcodeSpin 0.8s linear infinite;
+}
+
+@keyframes barcodeSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.barcode-hidden {
+    display: none !important;
+}
+
+.barcode-product-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #e4ebe7;
+}
+
+.barcode-product-header img {
+    width: 120px;
+    height: 120px;
+    flex-shrink: 0;
+    object-fit: contain;
+    border: 1px solid #e3ebe7;
+    border-radius: 17px;
+    background: #ffffff;
+}
+
+.barcode-product-header span {
+    color: #188b53;
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.barcode-product-header h3 {
+    margin: 5px 0;
+    color: #17382c;
+}
+
+.barcode-product-header p {
+    margin: 0;
+    color: #73817b;
+}
+
+.barcode-nutrition-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 11px;
+    margin-top: 18px;
+}
+
+.barcode-calorie-card,
+.barcode-nutrient-card {
+    padding: 15px;
+    border: 1px solid #e3ebe7;
+    border-radius: 14px;
+    background: #ffffff;
+}
+
+.barcode-calorie-card {
+    grid-column: span 2;
+    background: #eef9f3;
+    border-color: #d9eee2;
+}
+
+.barcode-nutrition-grid span {
+    display: block;
+    color: #718079;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.barcode-nutrition-grid strong {
+    display: block;
+    margin-top: 4px;
+    color: #18382d;
+    font-size: 1.15rem;
+}
+
+.barcode-calorie-card strong {
+    display: inline-block;
+    margin-right: 4px;
+    font-size: 1.9rem;
+}
+
+.barcode-serving-section {
+    margin-top: 18px;
+}
+
+.barcode-serving-section label {
+    display: block;
+    margin-bottom: 8px;
+    color: #304a3f;
+    font-weight: 700;
+}
+
+.barcode-add-meal-button {
+    width: 100%;
+    margin-top: 16px;
+    padding: 14px;
+}
+
+@media (max-width: 900px) {
+    .barcode-content-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .barcode-product-panel {
+        min-height: auto;
+    }
+
+    .barcode-empty-state,
+    .barcode-loading {
+        min-height: 320px;
+    }
+}
+
+@media (max-width: 560px) {
+    .barcode-search-card {
+        padding: 20px;
+    }
+
+    .barcode-search-heading,
+    .barcode-product-header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .barcode-input-row {
+        grid-template-columns: 1fr;
+    }
+
+    .barcode-camera-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .barcode-video-wrapper,
+    #barcodeVideo {
+        height: 290px;
+        min-height: 290px;
+    }
+
+    .barcode-product-header img {
+        width: 100%;
+        height: 190px;
+    }
+}

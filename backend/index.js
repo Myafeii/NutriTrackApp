@@ -161,17 +161,17 @@ app.post("/meals", async (req, res) => {
       });
     }
 
-      const docRef = await db.collection("meals").add({
-          uid,
-          food,
-          calories,
-          createdAt: new Date(),
-      });
+    const docRef = await db.collection("meals").add({
+      uid,
+      food,
+      calories,
+      createdAt: new Date(),
+    });
 
-      res.json({
-          message: "Meal saved successfully",
-          id: docRef.id,
-      });
+    res.json({
+      message: "Meal saved successfully",
+      id: docRef.id,
+    });
   } catch (error) {
     console.error("Meal Save Error:", error.message);
 
@@ -182,60 +182,64 @@ app.post("/meals", async (req, res) => {
 });
 
 app.get("/meals", async (req, res) => {
-    try {
-        const { uid } = req.query;
-        if (!uid) return res.status(400).json({ error: "uid is required" });
+  try {
+    const { uid } = req.query;
+    if (!uid) return res.status(400).json({ error: "uid is required" });
 
-        const snap = await db.collection("meals").where("uid", "==", uid).get();
+    const snap = await db.collection("meals").where("uid", "==", uid).get();
 
-        const meals = snap.docs.map((d) => {
-            const data = d.data();
-            return {
-                id: d.id,
-                uid: data.uid,
-                food: data.food,
-                calories: data.calories,
-                createdAt: data.createdAt,
-            };
-        });
+    const meals = snap.docs.map((d) => {
+      const data = d.data();
+      return {
+        id: d.id,
+        uid: data.uid,
+        food: data.food,
+        calories: data.calories,
+        createdAt: data.createdAt,
+      };
+    });
 
-        // newest first
-        meals.sort((a, b) => {
-            const ta = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt).getTime();
-            const tb = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt).getTime();
-            return tb - ta;
-        });
+    // newest first
+    meals.sort((a, b) => {
+      const ta = a.createdAt?.toDate
+        ? a.createdAt.toDate().getTime()
+        : new Date(a.createdAt).getTime();
+      const tb = b.createdAt?.toDate
+        ? b.createdAt.toDate().getTime()
+        : new Date(b.createdAt).getTime();
+      return tb - ta;
+    });
 
-        return res.json({ meals });
-    } catch (err) {
-        console.error("Get Meals Error:", err.message);
-        return res.status(500).json({ error: err.message });
-    }
+    return res.json({ meals });
+  } catch (err) {
+    console.error("Get Meals Error:", err.message);
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 app.delete("/meals/:id", async (req, res) => {
-    try {
-        const mealId = req.params.id;
-        const uid = req.query.uid;
+  try {
+    const mealId = req.params.id;
+    const uid = req.query.uid;
 
-        if (!mealId || !uid) {
-            return res.status(400).json({ error: "mealId and uid required" });
-        }
-
-        const ref = db.collection("meals").doc(mealId);
-        const snap = await ref.get();
-
-        if (!snap.exists) return res.status(404).json({ error: "Meal not found" });
-
-        const data = snap.data();
-        if (data.uid !== uid) return res.status(403).json({ error: "Not allowed" });
-
-        await ref.delete();
-        return res.json({ message: "Meal deleted" });
-    } catch (err) {
-        console.error("Delete Meal Error:", err.message);
-        return res.status(500).json({ error: err.message });
+    if (!mealId || !uid) {
+      return res.status(400).json({ error: "mealId and uid required" });
     }
+
+    const ref = db.collection("meals").doc(mealId);
+    const snap = await ref.get();
+
+    if (!snap.exists) return res.status(404).json({ error: "Meal not found" });
+
+    const data = snap.data();
+    if (data.uid !== uid) return res.status(403).json({ error: "Not allowed" });
+
+    await ref.delete();
+    return res.json({ message: "Meal deleted" });
+  } catch (err) {
+    console.error("Delete Meal Error:", err.message);
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 // =====================================================
@@ -369,23 +373,96 @@ app.post("/login", async (req, res) => {
 });
 
 app.post("/reset-password", async (req, res) => {
-    try {
-        const { email } = req.body;
+  try {
+    const { email } = req.body;
 
-        if (!email) return res.status(400).json({ error: "Email is required" });
-        if (!process.env.FIREBASE_WEB_API_KEY) {
-            return res.status(500).json({ error: "Missing FIREBASE_WEB_API_KEY in .env" });
-        }
-
-        const url = `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${process.env.FIREBASE_WEB_API_KEY}`;
-
-        await axios.post(url, { requestType: "PASSWORD_RESET", email });
-
-        return res.json({ message: "Password reset email sent." });
-    } catch (err) {
-        console.error("Reset Password Error:", err.response?.data || err.message);
-        return res.status(500).json({ error: "Reset password failed", details: err.response?.data || err.message });
+    if (!email) return res.status(400).json({ error: "Email is required" });
+    if (!process.env.FIREBASE_WEB_API_KEY) {
+      return res
+        .status(500)
+        .json({ error: "Missing FIREBASE_WEB_API_KEY in .env" });
     }
+
+    const url = `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${process.env.FIREBASE_WEB_API_KEY}`;
+
+    await axios.post(url, { requestType: "PASSWORD_RESET", email });
+
+    return res.json({ message: "Password reset email sent." });
+  } catch (err) {
+    console.error("Reset Password Error:", err.response?.data || err.message);
+    return res
+      .status(500)
+      .json({
+        error: "Reset password failed",
+        details: err.response?.data || err.message,
+      });
+  }
+});
+
+// =====================================================
+// BARCODE SCANNER
+// =====================================================
+
+app.get("/barcode/:barcode", async (req, res) => {
+  try {
+    const barcode = req.params.barcode?.trim();
+
+    if (!barcode) {
+      return res.status(400).json({
+        error: "Barcode is required",
+      });
+    }
+
+    const response = await axios.get(
+      `https://world.openfoodfacts.org/api/v2/product/${barcode}.json`,
+    );
+
+    if (!response.data || response.data.status !== 1) {
+      return res.status(404).json({
+        error: "Product not found",
+      });
+    }
+
+    const product = response.data.product;
+    const nutrients = product.nutriments || {};
+
+    const result = {
+      barcode,
+      name:
+        product.product_name || product.product_name_en || "Unknown Product",
+
+      brand: product.brands || "Unknown Brand",
+
+      imageUrl: product.image_front_url || product.image_url || null,
+
+      servingSize: product.serving_size || "100 g",
+
+      calories:
+        nutrients["energy-kcal_serving"] ?? nutrients["energy-kcal_100g"] ?? 0,
+
+      protein: nutrients.proteins_serving ?? nutrients.proteins_100g ?? 0,
+
+      carbohydrates:
+        nutrients.carbohydrates_serving ?? nutrients.carbohydrates_100g ?? 0,
+
+      fat: nutrients.fat_serving ?? nutrients.fat_100g ?? 0,
+
+      sugar: nutrients.sugars_serving ?? nutrients.sugars_100g ?? 0,
+
+      sodium: nutrients.sodium_serving ?? nutrients.sodium_100g ?? 0,
+    };
+
+    res.json(result);
+  } catch (error) {
+    console.error(
+      "Barcode lookup error:",
+      error.response?.data || error.message,
+    );
+
+    res.status(500).json({
+      error: "Unable to retrieve product information",
+    });
+  }
 });
 // =====================================================
 // START SERVER

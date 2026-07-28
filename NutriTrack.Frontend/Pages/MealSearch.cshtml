@@ -1,75 +1,363 @@
 @page
 @model NutriTrack.Frontend.Pages.MealSearchModel
+
 @{
     ViewData["Title"] = "Meal Search";
 }
 
 <div class="page-header">
     <h1>Meal Search</h1>
-    <p>Search foods, upload food images, view nutrition details, and add meals to your daily tracker.</p>
+
+    <p>
+        Search foods, upload food images, scan packaged products,
+        view nutrition details, and add meals to your daily tracker.
+    </p>
 </div>
 
 <div class="feature-card">
 
+    <!-- NORMAL FOOD SEARCH -->
     <form method="post" asp-page-handler="Search">
-        <label class="form-label fw-bold">Search food</label>
+        <label class="form-label fw-bold">
+            Search food
+        </label>
 
         <div class="input-group input-group-lg">
-            <input asp-for="Query" class="form-control" placeholder="e.g., banana, rice, chicken" />
-            <button class="btn btn-success" type="submit">Search</button>
+            <input
+                asp-for="Query"
+                class="form-control"
+                placeholder="e.g., banana, rice, chicken" />
+
+            <button
+                class="btn btn-success"
+                type="submit">
+                Search
+            </button>
         </div>
     </form>
 
+    <!-- AI FOOD RECOGNITION -->
     <div class="text-center my-4">
         <span class="badge bg-light text-success border px-3 py-2">
             OR USE AI FOOD RECOGNITION
         </span>
     </div>
 
-    <form method="post"
-          asp-page-handler="RecognizeFood"
-          enctype="multipart/form-data"
-          onsubmit="showLoading()">
+    <form
+        method="post"
+        asp-page-handler="RecognizeFood"
+        enctype="multipart/form-data"
+        onsubmit="showLoading()">
 
         <div class="ai-upload-box">
-            <div class="ai-upload-icon">📷</div>
+            <div class="ai-upload-icon">
+                📷
+            </div>
 
             <h4>Upload Food Image</h4>
+
             <p class="text-muted">
-                AI will recognize your food and calculate nutrition automatically.
+                AI will recognize your food and calculate nutrition
+                automatically.
             </p>
 
-            <input type="file"
-                   name="FoodImage"
-                   id="foodImageInput"
-                   class="form-control form-control-lg mt-3"
-                   accept="image/*"
-                   required
-                   onchange="previewImage(event)" />
+            <input
+                type="file"
+                name="FoodImage"
+                id="foodImageInput"
+                class="form-control form-control-lg mt-3"
+                accept="image/*"
+                required
+                onchange="previewImage(event)" />
 
-            <img id="imagePreview"
-                 class="image-preview mt-3"
-                 style="display:none;" />
+            <img
+                id="imagePreview"
+                class="image-preview mt-3"
+                alt="Selected food preview"
+                style="display:none;" />
 
-            <button class="btn btn-success btn-lg mt-3 px-5" type="submit">
+            <button
+                class="btn btn-success btn-lg mt-3 px-5"
+                type="submit">
                 Recognize Food
             </button>
 
-            <div id="loadingBox" class="mt-3" style="display:none;">
-                <div class="spinner-border text-success" role="status"></div>
-                <p class="text-muted mt-2">Analyzing image with AI...</p>
+            <div
+                id="loadingBox"
+                class="mt-3"
+                style="display:none;">
+
+                <div
+                    class="spinner-border text-success"
+                    role="status">
+                </div>
+
+                <p class="text-muted mt-2">
+                    Analyzing image with AI...
+                </p>
             </div>
         </div>
     </form>
 
+    <!-- BARCODE SCANNER DIVIDER -->
+    <div class="meal-method-divider">
+        <span>OR SCAN A PACKAGED FOOD</span>
+    </div>
+
+    <!-- BARCODE SCANNER -->
+    <section class="barcode-search-card">
+
+        <div class="barcode-search-heading">
+            <div class="barcode-search-icon">
+                ▥
+            </div>
+
+            <div>
+                <h2>Scan Product Barcode</h2>
+
+                <p>
+                    Use your camera or enter a UPC/EAN barcode
+                    manually to retrieve nutrition information.
+                </p>
+            </div>
+        </div>
+
+        <div class="barcode-content-grid">
+
+            <!-- LEFT SIDE: CAMERA -->
+            <div class="barcode-scanner-panel">
+
+                <div class="barcode-video-wrapper">
+                    <video
+                        id="barcodeVideo"
+                        autoplay
+                        muted
+                        playsinline>
+                    </video>
+
+                    <div
+                        id="barcodeVideoPlaceholder"
+                        class="barcode-video-placeholder">
+
+                        <span>📷</span>
+                        <p>Camera preview</p>
+                    </div>
+
+                    <div class="barcode-overlay">
+                        <div class="barcode-frame">
+                            <div class="barcode-line"></div>
+                        </div>
+                    </div>
+
+                    <span
+                        id="barcodeCameraStatus"
+                        class="barcode-camera-status">
+                        Camera stopped
+                    </span>
+                </div>
+
+                <div class="barcode-camera-buttons">
+                    <button
+                        type="button"
+                        id="startBarcodeCamera"
+                        class="barcode-main-button">
+                        Start Camera
+                    </button>
+
+                    <button
+                        type="button"
+                        id="stopBarcodeCamera"
+                        class="barcode-light-button"
+                        disabled>
+                        Stop Camera
+                    </button>
+                </div>
+
+                <div class="barcode-manual-entry">
+                    <label for="barcodeInput">
+                        Enter barcode manually
+                    </label>
+
+                    <div class="barcode-input-row">
+                        <input
+                            id="barcodeInput"
+                            type="text"
+                            inputmode="numeric"
+                            autocomplete="off"
+                            placeholder="Example: 3017620422003" />
+
+                        <button
+                            type="button"
+                            id="searchBarcodeButton"
+                            class="barcode-main-button">
+                            Search
+                        </button>
+                    </div>
+                </div>
+
+                <div
+                    id="barcodeMessage"
+                    class="barcode-message">
+                </div>
+            </div>
+
+            <!-- RIGHT SIDE: PRODUCT RESULT -->
+            <div class="barcode-product-panel">
+
+                <div
+                    id="barcodeEmptyState"
+                    class="barcode-empty-state">
+
+                    <div class="barcode-empty-icon">
+                        ▥
+                    </div>
+
+                    <h3>No product scanned</h3>
+
+                    <p>
+                        Scan a barcode or enter one manually to display
+                        the product and nutrition details.
+                    </p>
+                </div>
+
+                <div
+                    id="barcodeLoading"
+                    class="barcode-loading barcode-hidden">
+
+                    <div class="barcode-spinner"></div>
+
+                    <p>
+                        Looking up product...
+                    </p>
+                </div>
+
+                <div
+                    id="barcodeProductResult"
+                    class="barcode-product-result barcode-hidden">
+
+                    <div class="barcode-product-header">
+                        <img
+                            id="barcodeProductImage"
+                            src=""
+                            alt="Scanned product image" />
+
+                        <div>
+                            <span id="barcodeProductBrand">
+                                Unknown brand
+                            </span>
+
+                            <h3 id="barcodeProductName">
+                                Product
+                            </h3>
+
+                            <p id="barcodeServingSize">
+                                Serving information
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="barcode-nutrition-grid">
+
+                        <div class="barcode-calorie-card">
+                            <span>Calories</span>
+
+                            <strong id="barcodeCalories">
+                                0
+                            </strong>
+
+                            <small>kcal</small>
+                        </div>
+
+                        <div class="barcode-nutrient-card">
+                            <span>Protein</span>
+
+                            <strong id="barcodeProtein">
+                                0 g
+                            </strong>
+                        </div>
+
+                        <div class="barcode-nutrient-card">
+                            <span>Carbohydrates</span>
+
+                            <strong id="barcodeCarbohydrates">
+                                0 g
+                            </strong>
+                        </div>
+
+                        <div class="barcode-nutrient-card">
+                            <span>Fat</span>
+
+                            <strong id="barcodeFat">
+                                0 g
+                            </strong>
+                        </div>
+
+                        <div class="barcode-nutrient-card">
+                            <span>Sugar</span>
+
+                            <strong id="barcodeSugar">
+                                0 g
+                            </strong>
+                        </div>
+
+                        <div class="barcode-nutrient-card">
+                            <span>Sodium</span>
+
+                            <strong id="barcodeSodium">
+                                0 g
+                            </strong>
+                        </div>
+                    </div>
+
+                    <div class="barcode-serving-section">
+                        <label for="barcodeQuantity">
+                            Number of servings
+                        </label>
+
+                        <input
+                            id="barcodeQuantity"
+                            type="number"
+                            min="0.25"
+                            step="0.25"
+                            value="1" />
+                    </div>
+
+                    <form
+                        method="post"
+                        asp-page-handler="Add"
+                        id="barcodeAddMealForm">
+
+                        <input
+                            type="hidden"
+                            name="food"
+                            id="barcodeFoodInput" />
+
+                        <input
+                            type="hidden"
+                            name="calories"
+                            id="barcodeCaloriesInput" />
+
+                        <button
+                            type="submit"
+                            id="addBarcodeMealButton"
+                            class="barcode-add-meal-button">
+                            + Add to Daily Tracker
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
     @if (!string.IsNullOrEmpty(Model.Message))
     {
-        <div class="alert alert-warning mt-3">
+        <div class="alert alert-warning mt-4">
             @Model.Message
         </div>
     }
 </div>
 
+<!-- AI RESULT -->
 @if (Model.RecognizedFood != null)
 {
     <div class="feature-card mt-4">
@@ -77,15 +365,22 @@
         @if (!string.IsNullOrEmpty(Model.UploadedImageBase64))
         {
             <div class="text-center mb-4">
-                <img src="@Model.UploadedImageBase64"
-                     class="uploaded-food-image" />
+                <img
+                    src="@Model.UploadedImageBase64"
+                    class="uploaded-food-image"
+                    alt="Uploaded food" />
             </div>
         }
 
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
-                <h3 class="mb-1">AI Recognition Result</h3>
-                <p class="text-muted mb-0">Food recognized using AI image analysis.</p>
+                <h3 class="mb-1">
+                    AI Recognition Result
+                </h3>
+
+                <p class="text-muted mb-0">
+                    Food recognized using AI image analysis.
+                </p>
             </div>
 
             <span class="badge bg-success px-3 py-2">
@@ -94,36 +389,67 @@
         </div>
 
         <div class="ai-result-card">
-            <h4>@Model.RecognizedFood.DetectedFood</h4>
-            <p class="text-muted">Estimated nutrition using USDA food data.</p>
+            <h4>
+                @Model.RecognizedFood.DetectedFood
+            </h4>
+
+            <p class="text-muted">
+                Estimated nutrition using USDA food data.
+            </p>
 
             <div class="nutrition-grid mt-4">
+
                 <div class="nutrition-box">
-                    <h5>@Model.RecognizedFood.Calories</h5>
+                    <h5>
+                        @Model.RecognizedFood.Calories
+                    </h5>
+
                     <p>Calories</p>
                 </div>
 
                 <div class="nutrition-box">
-                    <h5>@Model.RecognizedFood.Protein g</h5>
+                    <h5>
+                        @Model.RecognizedFood.Protein g
+                    </h5>
+
                     <p>Protein</p>
                 </div>
 
                 <div class="nutrition-box">
-                    <h5>@Model.RecognizedFood.Carbs g</h5>
+                    <h5>
+                        @Model.RecognizedFood.Carbs g
+                    </h5>
+
                     <p>Carbs</p>
                 </div>
 
                 <div class="nutrition-box">
-                    <h5>@Model.RecognizedFood.Fat g</h5>
+                    <h5>
+                        @Model.RecognizedFood.Fat g
+                    </h5>
+
                     <p>Fat</p>
                 </div>
             </div>
 
-            <form method="post" asp-page-handler="Add" class="mt-4">
-                <input type="hidden" name="food" value="@Model.RecognizedFood.DetectedFood" />
-                <input type="hidden" name="calories" value="@Model.RecognizedFood.Calories" />
+            <form
+                method="post"
+                asp-page-handler="Add"
+                class="mt-4">
 
-                <button class="btn btn-outline-success btn-lg" type="submit">
+                <input
+                    type="hidden"
+                    name="food"
+                    value="@Model.RecognizedFood.DetectedFood" />
+
+                <input
+                    type="hidden"
+                    name="calories"
+                    value="@Model.RecognizedFood.Calories" />
+
+                <button
+                    class="btn btn-outline-success btn-lg"
+                    type="submit">
                     + Add to Daily Tracker
                 </button>
             </form>
@@ -132,23 +458,45 @@
 }
 else if (Model.Results.Count > 0)
 {
+    <!-- SEARCH RESULTS -->
     <div class="feature-card mt-4">
         <h3>Search Results</h3>
-        <p class="text-muted">Choose a food item to add to your daily tracker.</p>
+
+        <p class="text-muted">
+            Choose a food item to add to your daily tracker.
+        </p>
 
         <div class="list-group mt-3">
             @foreach (var item in Model.Results)
             {
                 <div class="list-group-item d-flex justify-content-between align-items-center">
                     <div>
-                        <strong>@item.Description</strong>
-                        <div class="text-muted">@item.Calories kcal</div>
+                        <strong>
+                            @item.Description
+                        </strong>
+
+                        <div class="text-muted">
+                            @item.Calories kcal
+                        </div>
                     </div>
 
-                    <form method="post" asp-page-handler="Add">
-                        <input type="hidden" name="food" value="@item.Description" />
-                        <input type="hidden" name="calories" value="@item.Calories" />
-                        <button class="btn btn-outline-success" type="submit">
+                    <form
+                        method="post"
+                        asp-page-handler="Add">
+
+                        <input
+                            type="hidden"
+                            name="food"
+                            value="@item.Description" />
+
+                        <input
+                            type="hidden"
+                            name="calories"
+                            value="@item.Calories" />
+
+                        <button
+                            class="btn btn-outline-success"
+                            type="submit">
                             Add Meal
                         </button>
                     </form>
@@ -160,31 +508,622 @@ else if (Model.Results.Count > 0)
 else
 {
     <div class="feature-card mt-4 text-center">
-        <h4>Start searching for meals</h4>
+        <h4>
+            Start searching for meals
+        </h4>
+
         <p class="text-muted">
-            Try searching foods like banana, rice, chicken, egg, or pasta, or upload a food image.
+            Try searching foods like banana, rice, chicken,
+            egg, or pasta, upload a food image, or scan a barcode.
         </p>
     </div>
 }
 
-<a class="btn btn-outline-success mt-4" href="/">
+<a
+    class="btn btn-outline-success mt-4"
+    href="/">
     Back to Dashboard
 </a>
 
 @section Scripts {
+
+    <script src="https://unpkg.com/@@zxing/browser@latest"></script>
+
     <script>
+        let barcodeReader = null;
+        let barcodeControls = null;
+        let currentBarcodeProduct = null;
+
+        const barcodeVideo =
+            document.getElementById("barcodeVideo");
+
+        const barcodeVideoPlaceholder =
+            document.getElementById("barcodeVideoPlaceholder");
+
+        const startBarcodeCameraButton =
+            document.getElementById("startBarcodeCamera");
+
+        const stopBarcodeCameraButton =
+            document.getElementById("stopBarcodeCamera");
+
+        const searchBarcodeButton =
+            document.getElementById("searchBarcodeButton");
+
+        const barcodeInput =
+            document.getElementById("barcodeInput");
+
+        const barcodeMessage =
+            document.getElementById("barcodeMessage");
+
+        const barcodeCameraStatus =
+            document.getElementById("barcodeCameraStatus");
+
+        const barcodeQuantity =
+            document.getElementById("barcodeQuantity");
+
+        const barcodeAddMealForm =
+            document.getElementById("barcodeAddMealForm");
+
         function previewImage(event) {
-            const preview = document.getElementById("imagePreview");
+            const preview =
+                document.getElementById("imagePreview");
+
             const file = event.target.files[0];
 
             if (file) {
-                preview.src = URL.createObjectURL(file);
+                preview.src =
+                    URL.createObjectURL(file);
+
                 preview.style.display = "block";
             }
         }
 
         function showLoading() {
-            document.getElementById("loadingBox").style.display = "block";
+            const loadingBox =
+                document.getElementById("loadingBox");
+
+            if (loadingBox) {
+                loadingBox.style.display = "block";
+            }
         }
+
+        function setBarcodeMessage(
+            message,
+            isError = false
+        ) {
+            barcodeMessage.textContent = message;
+
+            barcodeMessage.className =
+                isError
+                    ? "barcode-message barcode-error"
+                    : "barcode-message barcode-success";
+        }
+
+        function clearBarcodeMessage() {
+            barcodeMessage.textContent = "";
+            barcodeMessage.className =
+                "barcode-message";
+        }
+
+        async function startBarcodeCamera() {
+            clearBarcodeMessage();
+
+            try {
+                if (
+                    typeof ZXingBrowser === "undefined"
+                ) {
+                    setBarcodeMessage(
+                        "Barcode scanner library could not be loaded.",
+                        true
+                    );
+
+                    return;
+                }
+
+                barcodeReader =
+                    new ZXingBrowser
+                        .BrowserMultiFormatReader();
+
+                const devices =
+                    await ZXingBrowser
+                        .BrowserCodeReader
+                        .listVideoInputDevices();
+
+                if (!devices || devices.length === 0) {
+                    setBarcodeMessage(
+                        "No camera was found on this device.",
+                        true
+                    );
+
+                    return;
+                }
+
+                let selectedDeviceId =
+                    devices[0].deviceId;
+
+                const preferredCamera =
+                    devices.find(device => {
+                        const label =
+                            device.label.toLowerCase();
+
+                        return (
+                            label.includes("back") ||
+                            label.includes("rear") ||
+                            label.includes("environment")
+                        );
+                    });
+
+                if (preferredCamera) {
+                    selectedDeviceId =
+                        preferredCamera.deviceId;
+                }
+
+                barcodeCameraStatus.textContent =
+                    "Camera active";
+
+                barcodeCameraStatus
+                    .classList
+                    .add("active");
+
+                startBarcodeCameraButton.disabled =
+                    true;
+
+                stopBarcodeCameraButton.disabled =
+                    false;
+
+                barcodeVideoPlaceholder.style.display =
+                    "none";
+
+                barcodeControls =
+                    await barcodeReader
+                        .decodeFromVideoDevice(
+                            selectedDeviceId,
+                            barcodeVideo,
+                            async (result, error) => {
+                                if (result) {
+                                    const barcode =
+                                        result.getText();
+
+                                    barcodeInput.value =
+                                        barcode;
+
+                                    setBarcodeMessage(
+                                        `Barcode detected: ${barcode}`
+                                    );
+
+                                    stopBarcodeCamera();
+
+                                    await searchBarcode(
+                                        barcode
+                                    );
+                                }
+                            }
+                        );
+            }
+            catch (error) {
+                console.error(
+                    "Camera error:",
+                    error
+                );
+
+                barcodeCameraStatus.textContent =
+                    "Camera unavailable";
+
+                barcodeCameraStatus
+                    .classList
+                    .remove("active");
+
+                startBarcodeCameraButton.disabled =
+                    false;
+
+                stopBarcodeCameraButton.disabled =
+                    true;
+
+                barcodeVideoPlaceholder.style.display =
+                    "grid";
+
+                setBarcodeMessage(
+                    "Camera access failed. Check your browser camera permission.",
+                    true
+                );
+            }
+        }
+
+        function stopBarcodeCamera() {
+            if (barcodeControls) {
+                barcodeControls.stop();
+                barcodeControls = null;
+            }
+
+            if (barcodeVideo.srcObject) {
+                barcodeVideo.srcObject
+                    .getTracks()
+                    .forEach(track => track.stop());
+
+                barcodeVideo.srcObject = null;
+            }
+
+            barcodeCameraStatus.textContent =
+                "Camera stopped";
+
+            barcodeCameraStatus
+                .classList
+                .remove("active");
+
+            startBarcodeCameraButton.disabled =
+                false;
+
+            stopBarcodeCameraButton.disabled =
+                true;
+
+            barcodeVideoPlaceholder.style.display =
+                "grid";
+        }
+
+        async function searchBarcode(barcode) {
+            barcode = barcode.trim();
+
+            if (!barcode) {
+                setBarcodeMessage(
+                    "Please scan or enter a barcode.",
+                    true
+                );
+
+                return;
+            }
+
+            showBarcodeLoading();
+            clearBarcodeMessage();
+
+            try {
+                const response = await fetch(
+                    `?handler=Barcode&barcode=${encodeURIComponent(barcode)}`,
+                    {
+                        method: "GET",
+                        headers: {
+                            "Accept": "application/json"
+                        }
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(
+                        `Request failed: ${response.status}`
+                    );
+                }
+
+                const data =
+                    await response.json();
+
+                if (!data.success) {
+                    currentBarcodeProduct = null;
+
+                    showBarcodeEmptyState();
+
+                    setBarcodeMessage(
+                        data.error ||
+                        "Product not found.",
+                        true
+                    );
+
+                    return;
+                }
+
+                currentBarcodeProduct =
+                    data.product;
+
+                displayBarcodeProduct(
+                    currentBarcodeProduct
+                );
+
+                setBarcodeMessage(
+                    "Product found successfully."
+                );
+            }
+            catch (error) {
+                console.error(
+                    "Barcode lookup error:",
+                    error
+                );
+
+                currentBarcodeProduct = null;
+
+                showBarcodeEmptyState();
+
+                setBarcodeMessage(
+                    "Unable to retrieve product information.",
+                    true
+                );
+            }
+        }
+
+        function showBarcodeLoading() {
+            document
+                .getElementById(
+                    "barcodeEmptyState"
+                )
+                .classList
+                .add("barcode-hidden");
+
+            document
+                .getElementById(
+                    "barcodeProductResult"
+                )
+                .classList
+                .add("barcode-hidden");
+
+            document
+                .getElementById(
+                    "barcodeLoading"
+                )
+                .classList
+                .remove("barcode-hidden");
+        }
+
+        function showBarcodeEmptyState() {
+            document
+                .getElementById(
+                    "barcodeLoading"
+                )
+                .classList
+                .add("barcode-hidden");
+
+            document
+                .getElementById(
+                    "barcodeProductResult"
+                )
+                .classList
+                .add("barcode-hidden");
+
+            document
+                .getElementById(
+                    "barcodeEmptyState"
+                )
+                .classList
+                .remove("barcode-hidden");
+        }
+
+        function displayBarcodeProduct(product) {
+            document
+                .getElementById(
+                    "barcodeLoading"
+                )
+                .classList
+                .add("barcode-hidden");
+
+            document
+                .getElementById(
+                    "barcodeEmptyState"
+                )
+                .classList
+                .add("barcode-hidden");
+
+            document
+                .getElementById(
+                    "barcodeProductResult"
+                )
+                .classList
+                .remove("barcode-hidden");
+
+            const productImage =
+                document.getElementById(
+                    "barcodeProductImage"
+                );
+
+            productImage.src =
+                product.imageUrl ||
+                "https://placehold.co/240x240?text=No+Image";
+
+            productImage.onerror = function () {
+                this.onerror = null;
+
+                this.src =
+                    "https://placehold.co/240x240?text=No+Image";
+            };
+
+            document
+                .getElementById(
+                    "barcodeProductBrand"
+                )
+                .textContent =
+                    product.brand ||
+                    "Unknown brand";
+
+            document
+                .getElementById(
+                    "barcodeProductName"
+                )
+                .textContent =
+                    product.name ||
+                    "Unknown product";
+
+            document
+                .getElementById(
+                    "barcodeServingSize"
+                )
+                .textContent =
+                    `Serving: ${
+                        product.servingSize ||
+                        "100 g"
+                    }`;
+
+            document
+                .getElementById(
+                    "barcodeCalories"
+                )
+                .textContent =
+                    formatBarcodeNumber(
+                        product.calories
+                    );
+
+            document
+                .getElementById(
+                    "barcodeProtein"
+                )
+                .textContent =
+                    `${formatBarcodeNumber(
+                        product.protein
+                    )} g`;
+
+            document
+                .getElementById(
+                    "barcodeCarbohydrates"
+                )
+                .textContent =
+                    `${formatBarcodeNumber(
+                        product.carbohydrates
+                    )} g`;
+
+            document
+                .getElementById(
+                    "barcodeFat"
+                )
+                .textContent =
+                    `${formatBarcodeNumber(
+                        product.fat
+                    )} g`;
+
+            document
+                .getElementById(
+                    "barcodeSugar"
+                )
+                .textContent =
+                    `${formatBarcodeNumber(
+                        product.sugar
+                    )} g`;
+
+            document
+                .getElementById(
+                    "barcodeSodium"
+                )
+                .textContent =
+                    `${formatBarcodeNumber(
+                        product.sodium
+                    )} g`;
+
+            updateBarcodeMealForm();
+        }
+
+        function formatBarcodeNumber(value) {
+            const number =
+                Number(value || 0);
+
+            return Number.isInteger(number)
+                ? number
+                : number.toFixed(1);
+        }
+
+        function updateBarcodeMealForm() {
+            if (!currentBarcodeProduct) {
+                return;
+            }
+
+            let quantity =
+                Number(barcodeQuantity.value);
+
+            if (
+                !Number.isFinite(quantity) ||
+                quantity <= 0
+            ) {
+                quantity = 1;
+                barcodeQuantity.value = "1";
+            }
+
+            const productName =
+                currentBarcodeProduct.name ||
+                "Scanned product";
+
+            const caloriesPerServing =
+                Number(
+                    currentBarcodeProduct.calories ||
+                    0
+                );
+
+            const totalCalories =
+                Math.round(
+                    caloriesPerServing *
+                    quantity *
+                    100
+                ) / 100;
+
+            document
+                .getElementById(
+                    "barcodeFoodInput"
+                )
+                .value =
+                    quantity === 1
+                        ? productName
+                        : `${productName} (${quantity} servings)`;
+
+            document
+                .getElementById(
+                    "barcodeCaloriesInput"
+                )
+                .value =
+                    totalCalories.toString();
+        }
+
+        startBarcodeCameraButton
+            .addEventListener(
+                "click",
+                startBarcodeCamera
+            );
+
+        stopBarcodeCameraButton
+            .addEventListener(
+                "click",
+                stopBarcodeCamera
+            );
+
+        searchBarcodeButton
+            .addEventListener(
+                "click",
+                () => {
+                    searchBarcode(
+                        barcodeInput.value
+                    );
+                }
+            );
+
+        barcodeInput.addEventListener(
+            "keydown",
+            event => {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+
+                    searchBarcode(
+                        barcodeInput.value
+                    );
+                }
+            }
+        );
+
+        barcodeQuantity.addEventListener(
+            "input",
+            updateBarcodeMealForm
+        );
+
+        barcodeAddMealForm.addEventListener(
+            "submit",
+            event => {
+                if (!currentBarcodeProduct) {
+                    event.preventDefault();
+
+                    setBarcodeMessage(
+                        "Scan or search for a product first.",
+                        true
+                    );
+
+                    return;
+                }
+
+                updateBarcodeMealForm();
+            }
+        );
+
+        window.addEventListener(
+            "beforeunload",
+            stopBarcodeCamera
+        );
     </script>
 }
